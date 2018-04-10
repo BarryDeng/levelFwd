@@ -43,10 +43,13 @@ public class LevelManager implements LevelService {
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected CoreService coreService;
+
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected FlowRuleService flowRuleService;
+
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected HostService hostService;
+
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected MastershipService mastershipService;
 
@@ -59,7 +62,7 @@ public class LevelManager implements LevelService {
     private class InternalHostListener implements HostListener {
 
         /**
-         *
+         * Generate flow following the level
          */
         private void processHostAddedEvent(HostEvent event) {
             DeviceId deviceId = event.subject().location().deviceId();

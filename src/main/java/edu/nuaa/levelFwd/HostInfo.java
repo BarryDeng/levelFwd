@@ -33,6 +33,8 @@ public class HostInfo {
     private final EthType ethType;
     private final VlanPcpCriterion vlanPriority;
 
+    //private final levelRule level;
+
     protected static IdGenerator idGenerator;
     private static final Object ID_GENERATOR_LOCK = new Object();
 
@@ -48,6 +50,7 @@ public class HostInfo {
         this.ipProto = 0;
         this.ethType = null;
         this.vlanPriority = null;
+        //this.level = null;
     }
 
     /*
@@ -74,5 +77,7 @@ public class HostInfo {
         this.vlanPriority = vlanPriority;
     }
 
-
+    public HostId id(){
+        return this.id;
+    }
 }

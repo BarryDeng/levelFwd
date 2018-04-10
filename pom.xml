@@ -28,6 +28,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <onos.version>1.13.0-b8</onos.version>
+        <onos.app.name>edu.nuaa.levelFwd</onos.app.name>
+        <onos.app.origin>Weinan Wu</onos.app.origin>
         <!-- Uncomment to generate ONOS app from this module.
         <onos.app.name>org.foo.app</onos.app.name>
         <onos.app.title>Foo App</onos.app.title>
