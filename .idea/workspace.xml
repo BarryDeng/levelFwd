@@ -2,12 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="177be956-6e86-4eb8-9854-9f6b07b1e55f" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostStore.java" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/DistributeHostInfoStore.java" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" afterPath="$PROJECT_DIR$/pom.xml" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/AppComponent.java" afterPath="" />
       <change beforePath="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostInfo.java" afterPath="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostInfo.java" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelRule.java" afterPath="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelRule.java" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelService.java" afterPath="" />
       <change beforePath="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/LevelManager.java" afterPath="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/LevelManager.java" />
     </list>
     <ignored path="$PROJECT_DIR$/target/" />
@@ -23,33 +22,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="HostStore.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostStore.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="526">
-              <caret line="36" column="13" lean-forward="false" selection-start-line="36" selection-start-column="13" selection-end-line="36" selection-end-column="13" />
-              <folding>
-                <element signature="imports" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="pom.xml" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pom.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="558">
-              <caret line="31" column="34" lean-forward="false" selection-start-line="31" selection-start-column="34" selection-end-line="31" selection-end-column="34" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="DistributeHostInfoStore.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/DistributeHostInfoStore.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="254">
-              <caret line="67" column="22" lean-forward="true" selection-start-line="67" selection-start-column="22" selection-end-line="67" selection-end-column="23" />
+            <state relative-caret-position="218">
+              <caret line="38" column="62" lean-forward="true" selection-start-line="38" selection-start-column="62" selection-end-line="38" selection-end-column="62" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#2321#2322#0" expanded="true" />
@@ -59,15 +36,69 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="HostInfo.java" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostInfo.java">
+      <file leaf-file-name="HostStore.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostStore.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="234">
-              <caret line="39" column="0" lean-forward="true" selection-start-line="39" selection-start-column="0" selection-end-line="39" selection-end-column="0" />
+            <state relative-caret-position="254">
+              <caret line="21" column="7" lean-forward="true" selection-start-line="21" selection-start-column="7" selection-end-line="21" selection-end-column="7" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="e#2208#2209#0" expanded="true" />
-                <element signature="e#2238#2239#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="LevelManager.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/LevelManager.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="342">
+              <caret line="68" column="0" lean-forward="true" selection-start-line="68" selection-start-column="0" selection-end-line="68" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="HostInfo.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostInfo.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="2268">
+              <caret line="156" column="130" lean-forward="false" selection-start-line="156" selection-start-column="130" selection-end-line="156" selection-end-column="130" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="method#vlanId#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+                <element signature="method#Ip#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+                <element signature="method#srcMAC#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+                <element signature="method#inPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+                <element signature="method#srcTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+                <element signature="method#dstTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+                <element signature="method#ipProto#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+                <element signature="method#ethType#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+                <element signature="method#vlanPriority#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+                <element signature="method#rule#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="LevelRule.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelRule.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="918">
+              <caret line="51" column="5" lean-forward="false" selection-start-line="51" selection-start-column="5" selection-end-line="51" selection-end-column="5" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="e#547#548#0" expanded="true" />
+                <element signature="e#580#581#0" expanded="true" />
+                <element signature="e#616#617#0" expanded="true" />
+                <element signature="e#646#647#0" expanded="true" />
+                <element signature="e#810#811#0" expanded="true" />
+                <element signature="e#854#855#0" expanded="true" />
+                <element signature="e#884#885#0" expanded="true" />
+                <element signature="e#926#927#0" expanded="true" />
+                <element signature="e#972#973#0" expanded="true" />
+                <element signature="e#1013#1014#0" expanded="true" />
+                <element signature="e#1058#1059#0" expanded="true" />
+                <element signature="e#1102#1103#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -97,13 +128,13 @@
         <option value="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelService.java" />
         <option value="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/LevelService.java" />
         <option value="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/InternalHostListener.java" />
-        <option value="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelRule.java" />
         <option value="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostId.java" />
         <option value="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostStore.java" />
-        <option value="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/DistributeHostInfoStore.java" />
-        <option value="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostInfo.java" />
         <option value="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/LevelManager.java" />
         <option value="$PROJECT_DIR$/pom.xml" />
+        <option value="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/DistributeHostInfoStore.java" />
+        <option value="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostInfo.java" />
+        <option value="$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelRule.java" />
       </list>
     </option>
   </component>
@@ -138,6 +169,10 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scratches" />
+      <pane id="PackagesPane" />
+      <pane id="Scope" />
+      <pane id="AndroidView" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -184,10 +219,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
-      <pane id="PackagesPane" />
-      <pane id="Scratches" />
-      <pane id="AndroidView" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -334,18 +365,18 @@
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2881866" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.29721594" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Theme Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -362,6 +393,110 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/DistributeHostInfoStore.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="882">
+          <caret line="70" column="0" lean-forward="false" selection-start-line="70" selection-start-column="0" selection-end-line="70" selection-end-column="0" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#2321#2322#0" expanded="true" />
+            <element signature="e#2359#2360#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelRule.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="22" column="0" lean-forward="true" selection-start-line="22" selection-start-column="0" selection-end-line="22" selection-end-column="0" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#547#548#0" expanded="true" />
+            <element signature="e#580#581#0" expanded="true" />
+            <element signature="e#616#617#0" expanded="true" />
+            <element signature="e#646#647#0" expanded="true" />
+            <element signature="e#810#811#0" expanded="true" />
+            <element signature="e#854#855#0" expanded="true" />
+            <element signature="e#884#885#0" expanded="true" />
+            <element signature="e#926#927#0" expanded="true" />
+            <element signature="e#972#973#0" expanded="true" />
+            <element signature="e#1013#1014#0" expanded="true" />
+            <element signature="e#1058#1059#0" expanded="true" />
+            <element signature="e#1102#1103#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostInfo.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="378">
+          <caret line="30" column="0" lean-forward="true" selection-start-line="30" selection-start-column="0" selection-end-line="30" selection-end-column="0" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="method#vlanId#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#Ip#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcMAC#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#inPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#dstTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ipProto#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ethType#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#vlanPriority#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#rule#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostStore.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="612">
+          <caret line="36" column="13" lean-forward="false" selection-start-line="36" selection-start-column="13" selection-end-line="36" selection-end-column="13" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/DistributeHostInfoStore.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1206">
+          <caret line="67" column="22" lean-forward="true" selection-start-line="67" selection-start-column="22" selection-end-line="67" selection-end-column="23" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#2321#2322#0" expanded="true" />
+            <element signature="e#2359#2360#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pom.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="558">
+          <caret line="31" column="34" lean-forward="false" selection-start-line="31" selection-start-column="34" selection-end-line="31" selection-end-column="34" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostInfo.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="540">
+          <caret line="39" column="0" lean-forward="true" selection-start-line="39" selection-start-column="0" selection-end-line="39" selection-end-column="0" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="method#vlanId#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#Ip#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcMAC#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#inPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#dstTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ipProto#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ethType#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#vlanPriority#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#rule#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostStore.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -386,8 +521,16 @@
           <caret line="82" column="1" lean-forward="true" selection-start-line="16" selection-start-column="0" selection-end-line="82" selection-end-column="1" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#2208#2209#0" expanded="true" />
-            <element signature="e#2238#2239#0" expanded="true" />
+            <element signature="method#vlanId#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#Ip#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcMAC#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#inPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#dstTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ipProto#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ethType#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#vlanPriority#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#rule#0;class#Builder#0;class#HostInfo#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -428,8 +571,16 @@
           <caret line="42" column="21" lean-forward="false" selection-start-line="42" selection-start-column="21" selection-end-line="42" selection-end-column="21" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#2208#2209#0" expanded="true" />
-            <element signature="e#2238#2239#0" expanded="true" />
+            <element signature="method#vlanId#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#Ip#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcMAC#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#inPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#dstTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ipProto#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ethType#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#vlanPriority#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#rule#0;class#Builder#0;class#HostInfo#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -474,8 +625,16 @@
           <caret line="52" column="10" lean-forward="false" selection-start-line="52" selection-start-column="10" selection-end-line="52" selection-end-column="10" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#2208#2209#0" expanded="true" />
-            <element signature="e#2238#2239#0" expanded="true" />
+            <element signature="method#vlanId#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#Ip#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcMAC#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#inPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#dstTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ipProto#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ethType#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#vlanPriority#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#rule#0;class#Builder#0;class#HostInfo#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -516,8 +675,16 @@
           <caret line="52" column="10" lean-forward="false" selection-start-line="52" selection-start-column="10" selection-end-line="52" selection-end-column="10" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#2208#2209#0" expanded="true" />
-            <element signature="e#2238#2239#0" expanded="true" />
+            <element signature="method#vlanId#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#Ip#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcMAC#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#inPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#dstTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ipProto#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ethType#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#vlanPriority#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#rule#0;class#Builder#0;class#HostInfo#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -557,8 +724,16 @@
           <caret line="52" column="10" lean-forward="false" selection-start-line="52" selection-start-column="10" selection-end-line="52" selection-end-column="10" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#2208#2209#0" expanded="true" />
-            <element signature="e#2238#2239#0" expanded="true" />
+            <element signature="method#vlanId#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#Ip#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcMAC#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#inPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#dstTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ipProto#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ethType#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#vlanPriority#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#rule#0;class#Builder#0;class#HostInfo#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -635,42 +810,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelService.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="72">
-          <caret line="4" column="3" lean-forward="true" selection-start-line="4" selection-start-column="3" selection-end-line="4" selection-end-column="3" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelService.java" />
     <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/InternalHostListener.java" />
-    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelRule.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="126">
-          <caret line="7" column="0" lean-forward="false" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelService.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="54">
-          <caret line="3" column="36" lean-forward="false" selection-start-line="3" selection-start-column="33" selection-end-line="3" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/AppComponent.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="234">
-          <caret line="32" column="13" lean-forward="true" selection-start-line="32" selection-start-column="13" selection-end-line="32" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostId.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="414">
-          <caret line="45" column="0" lean-forward="true" selection-start-line="45" selection-start-column="0" selection-end-line="45" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/AppComponent.java" />
     <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/DistrbuteHostInfo.java" />
     <entry file="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/22.0/guava-22.0.jar!/com/google/common/base/Function.class">
       <provider selected="true" editor-type-id="text-editor">
@@ -679,35 +821,77 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/LevelManager.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostId.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="292">
-          <caret line="68" column="0" lean-forward="false" selection-start-line="68" selection-start-column="0" selection-end-line="68" selection-end-column="0" />
+        <state relative-caret-position="396">
+          <caret line="45" column="0" lean-forward="true" selection-start-line="45" selection-start-column="0" selection-end-line="45" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelService.java" />
     <entry file="file://$PROJECT_DIR$/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="558">
+        <state relative-caret-position="0">
           <caret line="31" column="34" lean-forward="false" selection-start-line="31" selection-start-column="34" selection-end-line="31" selection-end-column="34" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostStore.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/LevelRule.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="526">
-          <caret line="36" column="13" lean-forward="false" selection-start-line="36" selection-start-column="13" selection-end-line="36" selection-end-column="13" />
+        <state relative-caret-position="918">
+          <caret line="51" column="5" lean-forward="false" selection-start-line="51" selection-start-column="5" selection-end-line="51" selection-end-column="5" />
           <folding>
             <element signature="imports" expanded="true" />
+            <element signature="e#547#548#0" expanded="true" />
+            <element signature="e#580#581#0" expanded="true" />
+            <element signature="e#616#617#0" expanded="true" />
+            <element signature="e#646#647#0" expanded="true" />
+            <element signature="e#810#811#0" expanded="true" />
+            <element signature="e#854#855#0" expanded="true" />
+            <element signature="e#884#885#0" expanded="true" />
+            <element signature="e#926#927#0" expanded="true" />
+            <element signature="e#972#973#0" expanded="true" />
+            <element signature="e#1013#1014#0" expanded="true" />
+            <element signature="e#1058#1059#0" expanded="true" />
+            <element signature="e#1102#1103#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostInfo.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2268">
+          <caret line="156" column="130" lean-forward="false" selection-start-line="156" selection-start-column="130" selection-end-line="156" selection-end-column="130" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="method#vlanId#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#Ip#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcMAC#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#inPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#srcTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#dstTPPort#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ipProto#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#ethType#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#vlanPriority#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+            <element signature="method#rule#0;class#Builder#0;class#HostInfo#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/LevelManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="342">
+          <caret line="68" column="0" lean-forward="true" selection-start-line="68" selection-start-column="0" selection-end-line="68" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/impl/DistributeHostInfoStore.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="254">
-          <caret line="67" column="22" lean-forward="true" selection-start-line="67" selection-start-column="22" selection-end-line="67" selection-end-column="23" />
+        <state relative-caret-position="218">
+          <caret line="38" column="62" lean-forward="true" selection-start-line="38" selection-start-column="62" selection-end-line="38" selection-end-column="62" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#2321#2322#0" expanded="true" />
@@ -716,14 +900,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostInfo.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/edu/nuaa/levelFwd/HostStore.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="234">
-          <caret line="39" column="0" lean-forward="true" selection-start-line="39" selection-start-column="0" selection-end-line="39" selection-end-column="0" />
+        <state relative-caret-position="254">
+          <caret line="21" column="7" lean-forward="true" selection-start-line="21" selection-start-column="7" selection-end-line="21" selection-end-column="7" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#2208#2209#0" expanded="true" />
-            <element signature="e#2238#2239#0" expanded="true" />
           </folding>
         </state>
       </provider>

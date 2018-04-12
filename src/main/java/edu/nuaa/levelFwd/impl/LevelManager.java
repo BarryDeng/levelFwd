@@ -15,7 +15,6 @@
  */
 package edu.nuaa.levelFwd.impl;
 
-import edu.nuaa.levelFwd.LevelService;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
@@ -39,7 +38,7 @@ import org.slf4j.LoggerFactory;
  */
 @Component(immediate = true)
 @Service
-public class LevelManager implements LevelService {
+public class LevelManager {
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected CoreService coreService;
