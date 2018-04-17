@@ -15,6 +15,7 @@
  */
 package edu.nuaa.levelFwd.impl;
 
+import edu.nuaa.levelFwd.HostInfo;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
@@ -25,7 +26,6 @@ import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.core.IdGenerator;
 import org.onosproject.mastership.MastershipService;
-import org.onosproject.net.DeviceId;
 import org.onosproject.net.flow.FlowRuleService;
 import org.onosproject.net.host.HostEvent;
 import org.onosproject.net.host.HostListener;
@@ -60,17 +60,19 @@ public class LevelManager {
 
     private class InternalHostListener implements HostListener {
 
-        /**
-         * Generate flow following the level
-         */
-        private void processHostAddedEvent(HostEvent event) {
-            DeviceId deviceId = event.subject().location().deviceId();
-
-
-        }
 
         @Override
         public void event(HostEvent event) {
+            if (event.type() == HostEvent.Type.HOST_ADDED){
+                HostInfo.Builder builder = HostInfo.builder();
+
+                builder.vlanId(event.subject().vlan());
+                builder.deviceId(event.subject().location().deviceId());
+                builder.Ip(event.subject().location().ipElementId().ipAddress().toIpPrefix());
+                builder.srcMAC(event.subject().mac());
+                HostInfo new_host = builder.build();
+
+            }
         }
     }
 

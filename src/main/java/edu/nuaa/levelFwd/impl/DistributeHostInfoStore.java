@@ -4,13 +4,15 @@ import com.google.common.collect.Collections2;
 import edu.nuaa.levelFwd.HostId;
 import edu.nuaa.levelFwd.HostInfo;
 import edu.nuaa.levelFwd.HostStore;
+import edu.nuaa.levelFwd.LevelRule;
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.Service;
 import org.onosproject.core.CoreService;
 import org.onosproject.net.DeviceId;
-import org.onosproject.net.flow.FlowRule;
 import org.onosproject.store.AbstractStore;
 import org.onosproject.store.service.ConsistentMap;
 import org.onosproject.store.service.StorageService;
@@ -37,15 +39,25 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
 
     private ConsistentMap<HostId, HostInfo> hostSet;
     private ConsistentMap<DeviceId, Integer> deviceToPriority;
-    private ConsistentMap<HostId, Set<DeviceId>> ruleToDevice;
-    private ConsistentMap<HostId, Set<FlowRule>> ruleToFlow;
-    private ConsistentMap<HostId, List<HostId>> denyRuleToAllowRule;
+    private ConsistentMap<HostId, Set<String>> hostToService;
+    private ConsistentMap<HostId, LevelRule> hostToLevel;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected StorageService storageService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected CoreService coreService;
+
+
+    @Activate
+    public void activate() {
+        log.info("Started");
+    }
+
+    @Deactivate
+    public void deactive() {
+        log.info("Stopped");
+    }
 
     @Override
     public List<HostInfo> getHostInfos() {
@@ -78,8 +90,5 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
     public void clearHosts() {
         hostSet.clear();
         deviceToPriority.clear();
-        ruleToFlow.clear();
-        denyRuleToAllowRule.clear();
-        ruleToDevice.clear();
     }
 }
