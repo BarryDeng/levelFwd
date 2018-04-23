@@ -1,11 +1,15 @@
 package edu.nuaa.levelFwd;
 
+import com.google.common.base.MoreObjects;
 import org.onlab.packet.IpPrefix;
 import org.onlab.packet.MacAddress;
 import org.onlab.packet.VlanId;
 import org.onosproject.core.IdGenerator;
 import org.onosproject.net.DeviceId;
 
+import java.util.Objects;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 import static jersey.repackaged.com.google.common.base.Preconditions.checkState;
 
 /*
@@ -14,7 +18,7 @@ import static jersey.repackaged.com.google.common.base.Preconditions.checkState;
 public class HostInfo {
 
 
-    private final HostId id;
+    private final HostsId id;
 
     private final VlanId vlanId;
     private final DeviceId  deviceId;
@@ -43,7 +47,7 @@ public class HostInfo {
 
         synchronized (ID_GENERATOR_LOCK) {
             checkState(idGenerator != null, "Id generator is not bound.");
-            this.id = HostId.valueOf(idGenerator.getNewId());
+            this.id = HostsId.valueOf(idGenerator.getNewId());
         }
 
         this.vlanId = vlanId;
@@ -104,7 +108,14 @@ public class HostInfo {
         }
     }
 
-    public HostId id(){
+    public static void bindIdGenerator(IdGenerator newIdGenerator) {
+        synchronized (ID_GENERATOR_LOCK) {
+            checkState(idGenerator == null, "Id generator is already bound.");
+            idGenerator = checkNotNull(newIdGenerator);
+        }
+    }
+
+    public HostsId id(){
         return this.id;
     }
 
@@ -127,4 +138,40 @@ public class HostInfo {
     public LevelRule rule() {
         return rule;
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id.fingerprint(), vlanId, deviceId, Ip, srcMAC, rule);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof HostInfo) {
+            HostInfo that = (HostInfo) obj;
+            return Objects.equals(id, that.id) &&
+                    Objects.equals(vlanId, that.vlanId) &&
+                    Objects.equals(deviceId, that.deviceId) &&
+                    Objects.equals(Ip, that.Ip) &&
+                    Objects.equals(srcMAC, that.srcMAC) &&
+                    Objects.equals(rule, that.rule);
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .omitNullValues()
+                .add("id", id)
+                .add("vlanId", vlanId)
+                .add("deviceId", deviceId)
+                .add("Ip", Ip)
+                .add("srcMAC", srcMAC)
+                .add("rule", rule)
+                .toString();
+    }
+
 }

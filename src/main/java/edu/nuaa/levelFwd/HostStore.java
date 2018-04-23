@@ -1,6 +1,7 @@
 
 package edu.nuaa.levelFwd;
 
+import org.onlab.packet.MacAddress;
 import org.onosproject.store.Store;
 
 import java.util.List;
@@ -22,13 +23,15 @@ public interface HostStore extends Store {
     /**
      * Gets an existing Host infomations.
      */
-    HostInfo getHostInfo(HostId hostId);
+    HostInfo getHostInfoById(HostsId hostsId);
+
+    HostInfo getHostInfoByMAC(MacAddress srcMac);
 
 
     /**
      * Removes an existing Host infomations by host id.
      */
-    void removeHostInfo(HostId hostId);
+    void removeHostInfo(HostsId hostsId);
 
 
     /**
