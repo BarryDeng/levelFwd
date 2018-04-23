@@ -16,12 +16,14 @@
 package edu.nuaa.levelFwd.impl;
 
 import edu.nuaa.levelFwd.HostInfo;
+import edu.nuaa.levelFwd.LevelService;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.Service;
+import org.onlab.packet.Ethernet;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.core.IdGenerator;
@@ -30,6 +32,10 @@ import org.onosproject.net.flow.FlowRuleService;
 import org.onosproject.net.host.HostEvent;
 import org.onosproject.net.host.HostListener;
 import org.onosproject.net.host.HostService;
+import org.onosproject.net.packet.InboundPacket;
+import org.onosproject.net.packet.PacketContext;
+import org.onosproject.net.packet.PacketProcessor;
+import org.onosproject.net.packet.PacketService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 @Component(immediate = true)
 @Service
-public class LevelManager {
+public class LevelManager implements LevelService {
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected CoreService coreService;
@@ -51,6 +57,9 @@ public class LevelManager {
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected MastershipService mastershipService;
+
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected PacketService packetService;
 
     private final Logger log = LoggerFactory.getLogger(getClass());
     private ApplicationId appId;
@@ -76,8 +85,28 @@ public class LevelManager {
         }
     }
 
+    private class InternalPacketListener implements PacketProcessor {
+
+        @Override
+        public void process(PacketContext context) {
+            if (context.isHandled()) {
+                return;
+            }
+
+            InboundPacket pkt = context.inPacket();
+            Ethernet ethPkt = pkt.parsed();
+
+            log.info(ethPkt.toString());
+        }
+    }
+
     @Activate
     protected void activate() {
+
+        hostService.addListener(hostListener);
+
+        packetService.addProcessor(new InternalPacketListener(), PacketProcessor.director(2));
+
         log.info("Started");
     }
 

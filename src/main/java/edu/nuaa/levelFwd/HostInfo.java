@@ -98,7 +98,7 @@ public class HostInfo {
         public HostInfo build(){
             checkState(vlanId != null && deviceId != null && Ip != null && srcMAC != null,"Host infomation must be obained");
           if (rule == null){
-                rule.reSetLevel();
+                rule.resetLevel();
             }
             return new HostInfo(vlanId, deviceId, Ip, srcMAC, rule);
         }

@@ -37,7 +37,7 @@ public class LevelRule {
     }
 
 
-    public void reSetLevel(){
+    public void resetLevel(){
         this.level = Action.NOMAL;
         this.service.clear();
         this.service.add("web");
