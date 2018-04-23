@@ -26,21 +26,21 @@ import org.onlab.util.Identifier;
  * Host infomation identifier suitable as an external key.
  * <p>This class is immutable.</p>
  */
-public final class HostId extends Identifier<Long> {
+public final class HostsId extends Identifier<Long> {
     /**
      * Creates an Host infomation identifier from the specified long value.
      *
      * @param value long value
      * @return ACL rule identifier
      */
-    public static HostId valueOf(long value) {
-        return new HostId(value);
+    public static HostsId valueOf(long value) {
+        return new HostsId(value);
     }
 
     /**
      * Constructor for serializer.
      */
-    HostId() {
+    HostsId() {
         super(0L);
     }
 
@@ -49,7 +49,7 @@ public final class HostId extends Identifier<Long> {
      *
      * @param value the underlying value of this ID
      */
-    HostId(long value) {
+    HostsId(long value) {
         super(value);
     }
 

@@ -1,6 +1,8 @@
 package edu.nuaa.levelFwd;
 
 
+import org.onlab.packet.MacAddress;
+
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -11,15 +13,19 @@ public class LevelRule {
 
     private Action level;
     private Set<String> service = new TreeSet<>();
+    private MacAddress middleBox;
 
 
     public enum Action{
         WHITELIST, RELIABLE, NOMAL, THREAT, BLACKLIST
     }
 
+    private MacAddress[] middleBoxs = new MacAddress[5];
+
     private LevelRule() {
         this.level = Action.NOMAL;
         this.service.add("web");
+        this.middleBox = middleBoxs[this.level.ordinal()];
     }
 
     private LevelRule(Action level, Set<String> service){
@@ -36,6 +42,10 @@ public class LevelRule {
         return service;
     }
 
+    public MacAddress middleBox(){
+        return this.middleBox;
+    }
+
 
     public void reSetLevel(){
         this.level = Action.NOMAL;
@@ -44,11 +54,17 @@ public class LevelRule {
     }
 
     public void upLevel(){
-        this.level = Action.RELIABLE;
+        Action var = this.level;
+        var = Action.values()[var.ordinal() - 1];
+        this.level = var;
+        this.middleBox = middleBoxs[this.level.ordinal()];
     }
 
     public void downLevel(){
-        this.level = Action.THREAT;
+        Action var = this.level;
+        var = Action.values()[var.ordinal() + 1];
+        this.level = var;
+        this.middleBox = middleBoxs[this.level.ordinal()];
     }
 
 
