@@ -67,13 +67,11 @@ public class LevelManager implements LevelService {
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected HostStore hostStore;
 
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
-    protected PacketService packetService;
-
     private final Logger log = LoggerFactory.getLogger(getClass());
     private ApplicationId appId;
-    private final HostListener hostListener = new InternalHostListener();
-    private ReactivePacketProcessor processor = new ReactivePacketProcessor();
+    private HostListener hostListener = new InternalHostListener();
+//    private PacketProcessor processor = new ReactivePacketProcessor();
+    private PacketProcessor processor = new InternalPacketListener();
     private IdGenerator idGenerator;
 
 
@@ -106,17 +104,23 @@ public class LevelManager implements LevelService {
             InboundPacket pkt = context.inPacket();
             Ethernet ethPkt = pkt.parsed();
 
-            log.info(ethPkt.toString());
+            if (ethPkt.isBroadcast() && ethPkt.getEtherType() == Ethernet.TYPE_ARP) {
+                log.info(ethPkt.toString());
+            }
         }
     }
 
     @Activate
     protected void activate(ComponentContext context) {
         appId = coreService.registerApplication("org.onosproject.levelfwd");
+
         packetService.addProcessor(processor, PacketProcessor.director(2));
+
         hostService.addListener(hostListener);
+
         idGenerator = coreService.getIdGenerator("host-ids");
         HostInfo.bindIdGenerator(idGenerator);
+
         log.info("Started");
     }
 

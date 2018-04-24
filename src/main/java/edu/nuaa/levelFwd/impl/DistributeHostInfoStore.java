@@ -16,7 +16,6 @@ import org.onlab.util.KryoNamespace;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.net.DeviceId;
-import org.onosproject.net.HostId;
 import org.onosproject.store.AbstractStore;
 import org.onosproject.store.serializers.KryoNamespaces;
 import org.onosproject.store.service.ConsistentMap;
@@ -31,14 +30,12 @@ import java.util.Set;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-
 /**
  * Implementation of the hosts store service.
  */
 @Component(immediate = true)
 @Service
 public class DistributeHostInfoStore extends AbstractStore implements HostStore {
-
 
     private final Logger log = getLogger(getClass());
     private final int defaultFlowMaxPriority = 30000;
@@ -66,7 +63,8 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
                 .register(HostInfo.class)
                 .register(LevelRule.class)
                 .register(HostsId.class)
-                .register(MacAddress.class);
+                .register(MacAddress.class)
+                .register(DeviceId.class);
 
         hostSet = storageService.<HostsId, HostInfo>consistentMapBuilder()
                 .withSerializer(Serializer.using(serializer.build()))

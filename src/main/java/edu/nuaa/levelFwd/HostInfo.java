@@ -10,10 +10,10 @@ import org.onosproject.net.DeviceId;
 import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static jersey.repackaged.com.google.common.base.Preconditions.checkState;
+import static org.glassfish.jersey.internal.guava.Preconditions.checkState;
 
 /*
- * hosts infomation
+ * hosts information
  */
 public class HostInfo {
 
