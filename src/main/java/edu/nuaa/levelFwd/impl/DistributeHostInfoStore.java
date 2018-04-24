@@ -12,14 +12,11 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.Service;
 import org.onlab.packet.MacAddress;
-import org.onlab.util.KryoNamespace;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.net.DeviceId;
 import org.onosproject.store.AbstractStore;
-import org.onosproject.store.serializers.KryoNamespaces;
 import org.onosproject.store.service.ConsistentMap;
-import org.onosproject.store.service.Serializer;
 import org.onosproject.store.service.StorageService;
 import org.onosproject.store.service.Versioned;
 import org.slf4j.Logger;
@@ -53,60 +50,57 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected CoreService coreService;
 
-
     @Activate
     public void activate() {
-        ApplicationId appId = coreService.getAppId("org.onosproject.levelFwd");
+        ApplicationId appId = coreService.getAppId("edu.nuaa.levelFwd");
 
-        KryoNamespace.Builder serializer = KryoNamespace.newBuilder()
-                .register(KryoNamespaces.API)
-                .register(HostInfo.class)
-                .register(LevelRule.class)
-                .register(HostsId.class)
-                .register(MacAddress.class)
-                .register(DeviceId.class);
-
-        hostSet = storageService.<HostsId, HostInfo>consistentMapBuilder()
-                .withSerializer(Serializer.using(serializer.build()))
-                .withName("host-info-set")
-                .withApplicationId(appId)
-                .withPurgeOnUninstall()
-                .build();
-
-        deviceToPriority = storageService.<DeviceId, Integer>consistentMapBuilder()
-                .withSerializer(Serializer.using(serializer.build()))
-                .withName("device-to-priority")
-                .withApplicationId(appId)
-                .withPurgeOnUninstall()
-                .build();
-
-        hostToService = storageService.<HostsId, Set<String>>consistentMapBuilder()
-                .withSerializer(Serializer.using(serializer.build()))
-                .withName("host-service-set")
-                .withApplicationId(appId)
-                .withPurgeOnUninstall()
-                .build();
-
-        hostToLevel = storageService.<HostsId, LevelRule>consistentMapBuilder()
-                .withSerializer(Serializer.using(serializer.build()))
-                .withName("host-levelrule-set")
-                .withApplicationId(appId)
-                .withPurgeOnUninstall()
-                .build();
-
-        macToHost = storageService.<MacAddress, HostInfo>consistentMapBuilder()
-                .withSerializer(Serializer.using(serializer.build()))
-                .withName("mac-host-set")
-                .withApplicationId(appId)
-                .withPurgeOnUninstall()
-                .build();
-
-        hostToMBHost = storageService.<HostsId, MacAddress>consistentMapBuilder()
-                .withSerializer(Serializer.using(serializer.build()))
-                .withName("host-mbhost-set")
-                .withApplicationId(appId)
-                .withPurgeOnUninstall()
-                .build();
+//        KryoNamespace.Builder serializer = KryoNamespace.newBuilder()
+//                .register(KryoNamespaces.API)
+//                .register(HostInfo.class)
+//                .register(LevelRule.class)
+//                .register(HostsId.class);
+//
+//        hostSet = storageService.<HostsId, HostInfo>consistentMapBuilder()
+//                .withSerializer(Serializer.using(serializer.build()))
+//                .withName("host-info-set")
+//                .withApplicationId(appId)
+//                .withPurgeOnUninstall()
+//                .build();
+//
+//        deviceToPriority = storageService.<DeviceId, Integer>consistentMapBuilder()
+//                .withSerializer(Serializer.using(serializer.build()))
+//                .withName("device-to-priority")
+//                .withApplicationId(appId)
+//                .withPurgeOnUninstall()
+//                .build();
+//
+//        hostToService = storageService.<HostsId, Set<String>>consistentMapBuilder()
+//                .withSerializer(Serializer.using(serializer.build()))
+//                .withName("host-service-set")
+//                .withApplicationId(appId)
+//                .withPurgeOnUninstall()
+//                .build();
+//
+//        hostToLevel = storageService.<HostsId, LevelRule>consistentMapBuilder()
+//                .withSerializer(Serializer.using(serializer.build()))
+//                .withName("host-levelrule-set")
+//                .withApplicationId(appId)
+//                .withPurgeOnUninstall()
+//                .build();
+//
+//        macToHost = storageService.<MacAddress, HostInfo>consistentMapBuilder()
+//                .withSerializer(Serializer.using(serializer.build()))
+//                .withName("mac-host-set")
+//                .withApplicationId(appId)
+//                .withPurgeOnUninstall()
+//                .build();
+//
+//        hostToMBHost = storageService.<HostsId, MacAddress>consistentMapBuilder()
+//                .withSerializer(Serializer.using(serializer.build()))
+//                .withName("host-mbhost-set")
+//                .withApplicationId(appId)
+//                .withPurgeOnUninstall()
+//                .build();
 
         log.info("Started");
     }

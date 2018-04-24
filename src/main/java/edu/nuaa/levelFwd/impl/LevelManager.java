@@ -25,18 +25,27 @@ import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.Service;
+import org.onlab.packet.ARP;
 import org.onlab.packet.Ethernet;
+import org.onlab.packet.Ip4Address;
+import org.onlab.packet.IpAddress;
 import org.onlab.packet.MacAddress;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.core.IdGenerator;
 import org.onosproject.net.Host;
 import org.onosproject.net.HostId;
+import org.onosproject.net.flow.DefaultTrafficSelector;
+import org.onosproject.net.flow.DefaultTrafficTreatment;
 import org.onosproject.net.flow.FlowRuleService;
+import org.onosproject.net.flow.TrafficSelector;
+import org.onosproject.net.flow.TrafficTreatment;
 import org.onosproject.net.host.HostEvent;
 import org.onosproject.net.host.HostListener;
 import org.onosproject.net.host.HostService;
+import org.onosproject.net.packet.DefaultOutboundPacket;
 import org.onosproject.net.packet.InboundPacket;
+import org.onosproject.net.packet.OutboundPacket;
 import org.onosproject.net.packet.PacketContext;
 import org.onosproject.net.packet.PacketProcessor;
 import org.onosproject.net.packet.PacketService;
@@ -44,6 +53,7 @@ import org.osgi.service.component.ComponentContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -74,7 +84,6 @@ public class LevelManager implements LevelService {
     private PacketProcessor processor = new InternalPacketListener();
     private IdGenerator idGenerator;
 
-
     private class InternalHostListener implements HostListener {
 
         @Override
@@ -93,28 +102,15 @@ public class LevelManager implements LevelService {
         }
     }
 
-    private class InternalPacketListener implements PacketProcessor {
-
-        @Override
-        public void process(PacketContext context) {
-            if (context.isHandled()) {
-                return;
-            }
-
-            InboundPacket pkt = context.inPacket();
-            Ethernet ethPkt = pkt.parsed();
-
-            if (ethPkt.isBroadcast() && ethPkt.getEtherType() == Ethernet.TYPE_ARP) {
-                log.info(ethPkt.toString());
-            }
-        }
-    }
-
     @Activate
     protected void activate(ComponentContext context) {
-        appId = coreService.registerApplication("org.onosproject.levelfwd");
+        appId = coreService.registerApplication("edu.nuaa.levelFwd");
 
-        packetService.addProcessor(processor, PacketProcessor.director(2));
+        TrafficSelector selector = DefaultTrafficSelector.builder()
+                .matchArpTpa(Ip4Address.valueOf("10.0.0.254"))
+                .build();
+
+        packetService.addProcessor(processor, PacketProcessor.director(1));
 
         hostService.addListener(hostListener);
 
@@ -122,6 +118,43 @@ public class LevelManager implements LevelService {
         HostInfo.bindIdGenerator(idGenerator);
 
         log.info("Started");
+    }
+
+    private class InternalPacketListener implements PacketProcessor {
+
+        @Override
+        public void process(PacketContext context) {
+
+            if (context.isHandled()) {
+                return;
+            }
+
+            InboundPacket pkt = context.inPacket();
+            Ethernet ethPkt = pkt.parsed();
+
+            if (ethPkt.getEtherType() == Ethernet.TYPE_ARP) {
+
+                ARP arp = (ARP) ethPkt.getPayload();
+
+                log.info(arp.toString());
+                if (IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()).getIp4Address()
+                        .equals(IpAddress.valueOf("10.0.0.254"))) {
+                    log.info(arp.toString());
+
+                    Ethernet resPkt = ARP.buildArpReply(Ip4Address.valueOf("10.0.0.254"), MacAddress.valueOf("11:22:33:44:55:66"), ethPkt);
+
+                    TrafficTreatment treatment = DefaultTrafficTreatment.builder()
+                            .setOutput(context.inPacket().receivedFrom().port())
+                            .build();
+
+                    OutboundPacket response = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
+                                                                        treatment,
+                                                                        ByteBuffer.wrap(resPkt.serialize()));
+
+                    packetService.emit(response);
+                }
+            }
+        }
     }
 
     @Deactivate
