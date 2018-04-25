@@ -16,21 +16,23 @@ public class LevelRule {
     private MacAddress middleBox;
 
 
-    public enum Action{
-        WHITELIST, RELIABLE, NOMAL, THREAT, BLACKLIST
-    }
-
     private MacAddress[] middleBoxs = new MacAddress[5];
 
-    private LevelRule() {
-        this.level = Action.NOMAL;
+    public LevelRule() {
+        this.level = Action.NORMAL;
         this.service.add("web");
         this.middleBox = middleBoxs[this.level.ordinal()];
     }
 
-    private LevelRule(Action level, Set<String> service){
+    public LevelRule(Action level, Set<String> service) {
         this.level = level;
         this.service = service;
+    }
+
+    public void resetLevel() {
+        this.level = Action.NORMAL;
+        this.service.clear();
+        this.service.add("web");
     }
 
 
@@ -47,10 +49,8 @@ public class LevelRule {
     }
 
 
-    public void resetLevel(){
-        this.level = Action.NOMAL;
-        this.service.clear();
-        this.service.add("web");
+    public enum Action {
+        WHITELIST, RELIABLE, NORMAL, THREAT, BLACKLIST
     }
 
     public void upLevel(){

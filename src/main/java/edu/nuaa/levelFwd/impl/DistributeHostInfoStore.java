@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -59,7 +60,10 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
         KryoNamespace.Builder serializer = KryoNamespace.newBuilder()
                 .register(KryoNamespaces.API)
                 .register(HostInfo.class)
-                .register(LevelRule.class);
+                .register(LevelRule.class)
+                .register(MacAddress[].class)
+                .register(TreeSet.class)
+                .register(LevelRule.Action.class);
 
         hostSet = storageService.<HostId, HostInfo>consistentMapBuilder()
                 .withSerializer(Serializer.using(serializer.build()))

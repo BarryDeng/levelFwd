@@ -54,6 +54,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Skeletal ONOS application component.
@@ -200,13 +201,22 @@ public class LevelManager implements LevelService {
 
         @Override
         public void event(HostEvent event) {
-            if (event.type() == HostEvent.Type.HOST_UPDATED) {
+            log.info("HOST CHANGED!!");
+
+            if (event.type() == HostEvent.Type.HOST_ADDED) {
                 HostInfo.Builder builder = HostInfo.builder();
                 builder.hostId(event.subject().id());
                 builder.vlanId(event.subject().vlan());
                 builder.deviceId(event.subject().location().deviceId());
 //                builder.Ip(event.subject().location().ipElementId().ipAddress().toIpPrefix());
 
+                Set<IpAddress> addrs = event.subject().ipAddresses();
+                if (addrs.isEmpty()) {
+                    builder.Ip(IpAddress.valueOf("66.66.66.66"));
+                } else {
+
+                    builder.Ip(event.subject().ipAddresses().iterator().next());
+                }
                 builder.srcMAC(event.subject().mac());
                 HostInfo new_host = builder.build();
                 addHostInfo(new_host);

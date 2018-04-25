@@ -1,7 +1,7 @@
 package edu.nuaa.levelFwd;
 
 import com.google.common.base.MoreObjects;
-import org.onlab.packet.IpPrefix;
+import org.onlab.packet.IpAddress;
 import org.onlab.packet.MacAddress;
 import org.onlab.packet.VlanId;
 import org.onosproject.net.DeviceId;
@@ -16,12 +16,11 @@ import static org.glassfish.jersey.internal.guava.Preconditions.checkState;
  */
 public class HostInfo {
 
-
     private final HostId id;
 
     private final VlanId vlanId;
     private final DeviceId  deviceId;
-    private final IpPrefix Ip;
+    private final IpAddress Ip;
     private final MacAddress srcMAC;
 
     private LevelRule rule;
@@ -38,16 +37,14 @@ public class HostInfo {
     /*
      * Create a new HostInfo
      */
-    private HostInfo(HostId id, VlanId vlanId, DeviceId deviceId, IpPrefix Ip, MacAddress srcMAC,
+    private HostInfo(HostId id, VlanId vlanId, DeviceId deviceId, IpAddress Ip, MacAddress srcMAC,
                      LevelRule rule){
 
         this.id = id;
-
         this.vlanId = vlanId;
         this.deviceId = deviceId;
         this.Ip = Ip;
         this.srcMAC = srcMAC;
-
         this.rule = rule;
     }
 
@@ -72,7 +69,7 @@ public class HostInfo {
         return this.deviceId;
     }
 
-    public IpPrefix Ip() {
+    public IpAddress Ip() {
         return this.Ip;
     }
 
@@ -89,7 +86,7 @@ public class HostInfo {
         private HostId id = null;
         private VlanId vlanId = null;
         private DeviceId deviceId = null;
-        private IpPrefix Ip = null;
+        private IpAddress Ip = null;
         private MacAddress srcMAC = null;
         private LevelRule rule = null;
 
@@ -112,7 +109,7 @@ public class HostInfo {
             return this;
         }
 
-        public Builder Ip(IpPrefix Ip){
+        public Builder Ip(IpAddress Ip) {
             this.Ip = Ip;
             return this;
         }
@@ -129,8 +126,8 @@ public class HostInfo {
 
         public HostInfo build(){
             checkState(vlanId != null && deviceId != null && Ip != null && srcMAC != null,"Host infomation must be obained");
-          if (rule == null){
-                rule.resetLevel();
+            if (rule == null) {
+                rule = new LevelRule();
             }
             return new HostInfo(id, vlanId, deviceId, Ip, srcMAC, rule);
         }
