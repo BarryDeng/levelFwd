@@ -4,12 +4,11 @@ import com.google.common.base.MoreObjects;
 import org.onlab.packet.IpPrefix;
 import org.onlab.packet.MacAddress;
 import org.onlab.packet.VlanId;
-import org.onosproject.core.IdGenerator;
 import org.onosproject.net.DeviceId;
+import org.onosproject.net.HostId;
 
 import java.util.Objects;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.glassfish.jersey.internal.guava.Preconditions.checkState;
 
 /*
@@ -18,7 +17,7 @@ import static org.glassfish.jersey.internal.guava.Preconditions.checkState;
 public class HostInfo {
 
 
-    private final HostsId id;
+    private final HostId id;
 
     private final VlanId vlanId;
     private final DeviceId  deviceId;
@@ -26,9 +25,6 @@ public class HostInfo {
     private final MacAddress srcMAC;
 
     private LevelRule rule;
-
-    protected static IdGenerator idGenerator;
-    private static final Object ID_GENERATOR_LOCK = new Object();
 
     private HostInfo(){
         this.id = null;
@@ -42,13 +38,10 @@ public class HostInfo {
     /*
      * Create a new HostInfo
      */
-    private HostInfo(VlanId vlanId, DeviceId deviceId, IpPrefix Ip, MacAddress srcMAC,
+    private HostInfo(HostId id, VlanId vlanId, DeviceId deviceId, IpPrefix Ip, MacAddress srcMAC,
                      LevelRule rule){
 
-        synchronized (ID_GENERATOR_LOCK) {
-            checkState(idGenerator != null, "Id generator is not bound.");
-            this.id = HostsId.valueOf(idGenerator.getNewId());
-        }
+        this.id = id;
 
         this.vlanId = vlanId;
         this.deviceId = deviceId;
@@ -62,8 +55,38 @@ public class HostInfo {
         return new Builder();
     }
 
+    public HostId id() {
+        return this.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, vlanId, deviceId, Ip, srcMAC, rule);
+    }
+
+    public VlanId vlanId() {
+        return this.vlanId;
+    }
+
+    public DeviceId deviceId() {
+        return this.deviceId;
+    }
+
+    public IpPrefix Ip() {
+        return this.Ip;
+    }
+
+    public MacAddress srcMAC() {
+        return this.srcMAC;
+    }
+
+    public LevelRule rule() {
+        return rule;
+    }
+
     public static class Builder{
 
+        private HostId id = null;
         private VlanId vlanId = null;
         private DeviceId deviceId = null;
         private IpPrefix Ip = null;
@@ -72,6 +95,11 @@ public class HostInfo {
 
         private Builder() {
             // Hide constructor
+        }
+
+        public Builder hostId(HostId id) {
+            this.id = id;
+            return this;
         }
 
         public Builder vlanId(VlanId vlanId){
@@ -104,44 +132,8 @@ public class HostInfo {
           if (rule == null){
                 rule.resetLevel();
             }
-            return new HostInfo(vlanId, deviceId, Ip, srcMAC, rule);
+            return new HostInfo(id, vlanId, deviceId, Ip, srcMAC, rule);
         }
-    }
-
-    public static void bindIdGenerator(IdGenerator newIdGenerator) {
-        synchronized (ID_GENERATOR_LOCK) {
-            checkState(idGenerator == null, "Id generator is already bound.");
-            idGenerator = checkNotNull(newIdGenerator);
-        }
-    }
-
-    public HostsId id(){
-        return this.id;
-    }
-
-    public VlanId vlanId(){
-        return this.vlanId;
-    }
-
-    public DeviceId deviceId(){
-        return this.deviceId;
-    }
-
-    public IpPrefix Ip(){
-        return this.Ip;
-    }
-
-    public MacAddress srcMAC(){
-        return this.srcMAC;
-    }
-
-    public LevelRule rule() {
-        return rule;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id.fingerprint(), vlanId, deviceId, Ip, srcMAC, rule);
     }
 
     @Override

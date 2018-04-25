@@ -17,7 +17,6 @@ package edu.nuaa.levelFwd.impl;
 
 import edu.nuaa.levelFwd.HostInfo;
 import edu.nuaa.levelFwd.HostStore;
-import edu.nuaa.levelFwd.HostsId;
 import edu.nuaa.levelFwd.LevelService;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -84,22 +83,12 @@ public class LevelManager implements LevelService {
     private PacketProcessor processor = new InternalPacketListener();
     private IdGenerator idGenerator;
 
-    private class InternalHostListener implements HostListener {
-
-        @Override
-        public void event(HostEvent event) {
-            if (event.type() == HostEvent.Type.HOST_ADDED){
-                HostInfo.Builder builder = HostInfo.builder();
-
-                builder.vlanId(event.subject().vlan());
-                builder.deviceId(event.subject().location().deviceId());
-                builder.Ip(event.subject().location().ipElementId().ipAddress().toIpPrefix());
-                builder.srcMAC(event.subject().mac());
-                HostInfo new_host = builder.build();
-                addHostInfo(new_host);
-
-            }
-        }
+    /**
+     * Gets an existing Host infomations.
+     */
+    @Override
+    public HostInfo getHostInfo(HostId hostId) {
+        return hostStore.getHostInfoById(hostId);
     }
 
     @Activate
@@ -115,46 +104,16 @@ public class LevelManager implements LevelService {
         hostService.addListener(hostListener);
 
         idGenerator = coreService.getIdGenerator("host-ids");
-        HostInfo.bindIdGenerator(idGenerator);
 
         log.info("Started");
     }
 
-    private class InternalPacketListener implements PacketProcessor {
-
-        @Override
-        public void process(PacketContext context) {
-
-            if (context.isHandled()) {
-                return;
-            }
-
-            InboundPacket pkt = context.inPacket();
-            Ethernet ethPkt = pkt.parsed();
-
-            if (ethPkt.getEtherType() == Ethernet.TYPE_ARP) {
-
-                ARP arp = (ARP) ethPkt.getPayload();
-
-                log.info(arp.toString());
-                if (IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()).getIp4Address()
-                        .equals(IpAddress.valueOf("10.0.0.254"))) {
-                    log.info(arp.toString());
-
-                    Ethernet resPkt = ARP.buildArpReply(Ip4Address.valueOf("10.0.0.254"), MacAddress.valueOf("11:22:33:44:55:66"), ethPkt);
-
-                    TrafficTreatment treatment = DefaultTrafficTreatment.builder()
-                            .setOutput(context.inPacket().receivedFrom().port())
-                            .build();
-
-                    OutboundPacket response = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
-                                                                        treatment,
-                                                                        ByteBuffer.wrap(resPkt.serialize()));
-
-                    packetService.emit(response);
-                }
-            }
-        }
+    /**
+     * Removes an existing Host infomations by host id.
+     */
+    @Override
+    public void removeHostInfo(HostId hostId) {
+        hostStore.removeHostInfo(hostId);
     }
 
     @Deactivate
@@ -237,20 +196,59 @@ public class LevelManager implements LevelService {
         hostStore.addHostInfo(host);
     }
 
-    /**
-     * Gets an existing Host infomations.
-     */
-    @Override
-    public HostInfo getHostInfo(HostsId hostsId){
-        return hostStore.getHostInfoById(hostsId);
+    private class InternalHostListener implements HostListener {
+
+        @Override
+        public void event(HostEvent event) {
+            if (event.type() == HostEvent.Type.HOST_UPDATED) {
+                HostInfo.Builder builder = HostInfo.builder();
+                builder.hostId(event.subject().id());
+                builder.vlanId(event.subject().vlan());
+                builder.deviceId(event.subject().location().deviceId());
+//                builder.Ip(event.subject().location().ipElementId().ipAddress().toIpPrefix());
+
+                builder.srcMAC(event.subject().mac());
+                HostInfo new_host = builder.build();
+                addHostInfo(new_host);
+                log.info(String.format("New Host %s: %s", event.subject().id(), new_host.toString()));
+            }
+        }
     }
 
-    /**
-     * Removes an existing Host infomations by host id.
-     */
-    @Override
-    public void removeHostInfo(HostsId hostsId){
-        hostStore.removeHostInfo((hostsId));
+    private class InternalPacketListener implements PacketProcessor {
+
+        @Override
+        public void process(PacketContext context) {
+
+            if (context.isHandled()) {
+                return;
+            }
+
+            InboundPacket pkt = context.inPacket();
+            Ethernet ethPkt = pkt.parsed();
+
+            if (ethPkt.getEtherType() == Ethernet.TYPE_ARP) {
+
+                ARP arp = (ARP) ethPkt.getPayload();
+
+                if (IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()).getIp4Address()
+                        .equals(IpAddress.valueOf("10.0.0.254"))) {
+//                    log.info(arp.toString());
+
+                    Ethernet resPkt = ARP.buildArpReply(Ip4Address.valueOf("10.0.0.254"), MacAddress.valueOf("11:22:33:44:55:66"), ethPkt);
+
+                    TrafficTreatment treatment = DefaultTrafficTreatment.builder()
+                            .setOutput(context.inPacket().receivedFrom().port())
+                            .build();
+
+                    OutboundPacket response = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
+                                                                        treatment,
+                                                                        ByteBuffer.wrap(resPkt.serialize()));
+
+                    packetService.emit(response);
+                }
+            }
+        }
     }
 
     /**

@@ -1,5 +1,7 @@
 package edu.nuaa.levelFwd;
 
+import org.onosproject.net.HostId;
+
 import java.util.List;
 
 public interface LevelService {
@@ -19,13 +21,13 @@ public interface LevelService {
     /**
      * Gets an existing Host infomations.
      */
-    HostInfo getHostInfo(HostsId hostsId);
+    HostInfo getHostInfo(HostId hostId);
 
 
     /**
      * Removes an existing Host infomations by host id.
      */
-    void removeHostInfo(HostsId hostsId);
+    void removeHostInfo(HostId hostId);
 
 
     /**
