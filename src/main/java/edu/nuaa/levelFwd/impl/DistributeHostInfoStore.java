@@ -45,7 +45,6 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
     private ConsistentMap<DeviceId, Integer> deviceToPriority; // Device优先级
     private ConsistentMap<HostId, Set<String>> hostToService; // 主机可以访问的服务类型
     private ConsistentMap<HostId, LevelRule> hostToLevel; // 主机对应的安全级别
-    private ConsistentMap<HostId, MacAddress> hostToMBHost; // HostId和Mac地址对应关系
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected StorageService storageService;
@@ -63,7 +62,7 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
                 .register(LevelRule.class)
                 .register(MacAddress[].class)
                 .register(TreeSet.class)
-                .register(LevelRule.Action.class);
+                .register(LevelRule.Level.class);
 
         hostSet = storageService.<HostId, HostInfo>consistentMapBuilder()
                 .withSerializer(Serializer.using(serializer.build()))
@@ -93,13 +92,6 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
                 .withPurgeOnUninstall()
                 .build();
 
-        hostToMBHost = storageService.<HostId, MacAddress>consistentMapBuilder()
-                .withSerializer(Serializer.using(serializer.build()))
-                .withName("host-mbhost-set")
-                .withApplicationId(appId)
-                .withPurgeOnUninstall()
-                .build();
-
         log.info("Started");
     }
 
@@ -121,7 +113,6 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
         hostSet.putIfAbsent(host.id(), host);
         hostToLevel.putIfAbsent(host.id(), host.rule());
         hostToService.putIfAbsent(host.id(), host.rule().service());
-        hostToMBHost.putIfAbsent(host.id(), host.rule().middleBox());
     }
 
     @Override
@@ -155,6 +146,5 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
         deviceToPriority.clear();
         hostToService.clear();
         hostToLevel.clear();
-        hostToMBHost.clear();
     }
 }
