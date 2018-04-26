@@ -15,8 +15,7 @@ public class LevelRule {
     private Set<String> service = new TreeSet<>();
     private MacAddress middleBox;
 
-
-    private MacAddress[] middleBoxs = new MacAddress[5];
+    private static MacAddress[] middleBoxs = new MacAddress[5];
 
     public LevelRule() {
         this.level = Action.NORMAL;
@@ -48,7 +47,6 @@ public class LevelRule {
         return this.middleBox;
     }
 
-
     public enum Action {
         WHITELIST, RELIABLE, NORMAL, THREAT, BLACKLIST
     }
@@ -66,7 +64,6 @@ public class LevelRule {
         this.level = var;
         this.middleBox = middleBoxs[this.level.ordinal()];
     }
-
 
     public void addService(String service){
         this.service.add(service);

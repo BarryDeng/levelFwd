@@ -7,31 +7,31 @@ import java.util.List;
 public interface LevelService {
 
     /**
-     * Gets a list containing all Host infomations.
+     * Gets a list containing all Host informations.
      */
     List<HostInfo> getHostInfos();
 
 
     /**
-     * Adds a new Host infomations.
+     * Adds a new Host informations.
      */
     void addHostInfo(HostInfo host);
 
 
     /**
-     * Gets an existing Host infomations.
+     * Gets an existing Host informations.
      */
     HostInfo getHostInfo(HostId hostId);
 
 
     /**
-     * Removes an existing Host infomations by host id.
+     * Removes an existing Host informations by host id.
      */
     void removeHostInfo(HostId hostId);
 
 
     /**
-     * Clear all Host infomations and reset.
+     * Clear all Host informations and reset.
      */
     void clearHosts();
 }
