@@ -26,6 +26,11 @@ public interface HostStore extends Store {
     HostInfo getHostInfoById(HostId hostId);
 
     /**
+     *  Gets an existing Host level by hostId
+     */
+    LevelRule getHostLevelById(HostId hostId);
+
+    /**
      * Removes an existing Host infomations by host id.
      */
     void removeHostInfo(HostId hostId);

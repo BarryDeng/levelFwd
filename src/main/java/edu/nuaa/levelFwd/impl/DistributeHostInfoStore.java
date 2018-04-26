@@ -135,6 +135,16 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
     }
 
     @Override
+    public LevelRule getHostLevelById(HostId hostId){
+        Versioned<LevelRule> level = hostToLevel.get(hostId);
+        if (level != null) {
+            return level.value();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
     public void removeHostInfo(HostId hostId) {
         hostSet.remove(hostId);
     }

@@ -11,32 +11,27 @@ import java.util.TreeSet;
  */
 public class LevelRule {
 
-    private Action level;
+    private Level level;
     private Set<String> service = new TreeSet<>();
-    private MacAddress middleBox;
 
-
-    private MacAddress[] middleBoxs = new MacAddress[5];
 
     public LevelRule() {
-        this.level = Action.NORMAL;
+        this.level = Level.NORMAL;
         this.service.add("web");
-        this.middleBox = middleBoxs[this.level.ordinal()];
     }
 
-    public LevelRule(Action level, Set<String> service) {
+    public LevelRule(Level level, Set<String> service) {
         this.level = level;
         this.service = service;
     }
 
     public void resetLevel() {
-        this.level = Action.NORMAL;
+        this.level = Level.NORMAL;
         this.service.clear();
         this.service.add("web");
     }
 
-
-    public Action level(){
+    public Level level(){
         return this.level;
     }
 
@@ -44,27 +39,55 @@ public class LevelRule {
         return service;
     }
 
-    public MacAddress middleBox(){
-        return this.middleBox;
-    }
 
+    public enum Level {
+        WHITELIST(10000, "11:11:11:11:11:11"),
+        RELIABLE(10001, "22:22:22:22:22:22"),
+        NORMAL(10002, "33:33:33:33:33:33"),
+        THREAT(10003, "44:44:44:44:44:44"),
+        BLACKLIST(10004, "55:55:55:55:55:55");
 
-    public enum Action {
-        WHITELIST, RELIABLE, NORMAL, THREAT, BLACKLIST
+        private int code;
+        private String MAC;
+        private Level(int code, String mac) {
+            this.code = code;
+            this.MAC = mac;
+        }
+
+        public int getCode() {
+            return code;
+        }
+
+        public String getMAC() {
+            return MAC;
+        }
+
+        public void setCode(int code) {
+            this.code = code;
+        }
+
+        public void setMAC(String MAC) {
+            this.MAC = MAC;
+        }
+
+        public static Level getByValue(int value) {
+            for (Level level : values()) {
+                if (level.getCode() == value) {
+                    return level;
+                }
+            }
+            return null;
+        }
     }
 
     public void upLevel(){
-        Action var = this.level;
-        var = Action.values()[var.ordinal() - 1];
-        this.level = var;
-        this.middleBox = middleBoxs[this.level.ordinal()];
+        int var = this.level.code - 1;
+        this.level = Level.getByValue(var);
     }
 
     public void downLevel(){
-        Action var = this.level;
-        var = Action.values()[var.ordinal() + 1];
-        this.level = var;
-        this.middleBox = middleBoxs[this.level.ordinal()];
+        int var = this.level.code + 1;
+        this.level = Level.getByValue(var);
     }
 
 

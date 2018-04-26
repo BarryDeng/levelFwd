@@ -17,6 +17,7 @@ package edu.nuaa.levelFwd.impl;
 
 import edu.nuaa.levelFwd.HostInfo;
 import edu.nuaa.levelFwd.HostStore;
+import edu.nuaa.levelFwd.LevelRule;
 import edu.nuaa.levelFwd.LevelService;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -84,13 +85,6 @@ public class LevelManager implements LevelService {
     private PacketProcessor processor = new InternalPacketListener();
     private IdGenerator idGenerator;
 
-    /**
-     * Gets an existing Host infomations.
-     */
-    @Override
-    public HostInfo getHostInfo(HostId hostId) {
-        return hostStore.getHostInfoById(hostId);
-    }
 
     @Activate
     protected void activate(ComponentContext context) {
@@ -107,14 +101,6 @@ public class LevelManager implements LevelService {
         idGenerator = coreService.getIdGenerator("host-ids");
 
         log.info("Started");
-    }
-
-    /**
-     * Removes an existing Host infomations by host id.
-     */
-    @Override
-    public void removeHostInfo(HostId hostId) {
-        hostStore.removeHostInfo(hostId);
     }
 
     @Deactivate
@@ -187,16 +173,6 @@ public class LevelManager implements LevelService {
         return eth.getEtherType() == Ethernet.TYPE_IPV6 && eth.isMulticast();
     }
 
-    @Override
-    public List<HostInfo> getHostInfos(){
-        return hostStore.getHostInfos();
-    }
-
-    @Override
-    public void addHostInfo(HostInfo host){
-        hostStore.addHostInfo(host);
-    }
-
     private class InternalHostListener implements HostListener {
 
         @Override
@@ -245,6 +221,14 @@ public class LevelManager implements LevelService {
                         .equals(IpAddress.valueOf("10.0.0.254"))) {
 //                    log.info(arp.toString());
 
+                    HostId id = HostId.hostId(ethPkt.getDestinationMAC());
+                    LevelRule levelRule = getHostLevel(id);
+                    switch (levelRule.level()){
+                       // case LevelRule.Level.WHITELIST:
+                       //     break;
+
+                    }
+
                     Ethernet resPkt = ARP.buildArpReply(Ip4Address.valueOf("10.0.0.254"), MacAddress.valueOf("11:22:33:44:55:66"), ethPkt);
 
                     TrafficTreatment treatment = DefaultTrafficTreatment.builder()
@@ -259,6 +243,39 @@ public class LevelManager implements LevelService {
                 }
             }
         }
+    }
+
+    @Override
+    public List<HostInfo> getHostInfos(){
+        return hostStore.getHostInfos();
+    }
+
+    @Override
+    public void addHostInfo(HostInfo host){
+        hostStore.addHostInfo(host);
+    }
+
+    /**
+     * Gets an existing Host infomations.
+     */
+    @Override
+    public HostInfo getHostInfo(HostId hostId) {
+        return hostStore.getHostInfoById(hostId);
+    }
+
+    /**
+     *  Gets an existing Host level by hostId
+     */
+    @Override
+    public LevelRule getHostLevel(HostId hostId){
+        return hostStore.getHostLevelById(hostId);
+    }
+    /**
+     * Removes an existing Host infomations by host id.
+     */
+    @Override
+    public void removeHostInfo(HostId hostId) {
+        hostStore.removeHostInfo(hostId);
     }
 
     /**

@@ -23,6 +23,10 @@ public interface LevelService {
      */
     HostInfo getHostInfo(HostId hostId);
 
+    /**
+     *  Gets an existing Host level by hostId
+     */
+    LevelRule getHostLevel(HostId hostId);
 
     /**
      * Removes an existing Host infomations by host id.
