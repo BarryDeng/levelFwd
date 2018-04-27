@@ -17,6 +17,7 @@ package edu.nuaa.levelFwd.impl;
 
 import edu.nuaa.levelFwd.HostInfo;
 import edu.nuaa.levelFwd.HostStore;
+import edu.nuaa.levelFwd.Level;
 import edu.nuaa.levelFwd.LevelRule;
 import edu.nuaa.levelFwd.LevelService;
 import org.apache.felix.scr.annotations.Activate;
@@ -29,6 +30,7 @@ import org.onlab.packet.ARP;
 import org.onlab.packet.Ethernet;
 import org.onlab.packet.Ip4Address;
 import org.onlab.packet.IpAddress;
+import org.onlab.packet.IpPrefix;
 import org.onlab.packet.MacAddress;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
@@ -40,6 +42,9 @@ import org.onosproject.net.flow.DefaultTrafficTreatment;
 import org.onosproject.net.flow.FlowRuleService;
 import org.onosproject.net.flow.TrafficSelector;
 import org.onosproject.net.flow.TrafficTreatment;
+import org.onosproject.net.flowobjective.DefaultForwardingObjective;
+import org.onosproject.net.flowobjective.FlowObjectiveService;
+import org.onosproject.net.flowobjective.ForwardingObjective;
 import org.onosproject.net.host.HostEvent;
 import org.onosproject.net.host.HostListener;
 import org.onosproject.net.host.HostService;
@@ -77,6 +82,9 @@ public class LevelManager implements LevelService {
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected HostStore hostStore;
+
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected FlowObjectiveService flowObjectiveService;
 
     private final Logger log = LoggerFactory.getLogger(getClass());
     private ApplicationId appId;
@@ -240,6 +248,26 @@ public class LevelManager implements LevelService {
                                                                         ByteBuffer.wrap(resPkt.serialize()));
 
                     packetService.emit(response);
+
+                    TrafficSelector selector = DefaultTrafficSelector.builder()
+                            .matchIPDst(IpPrefix.valueOf("10.0.0.254"))
+                            .build();
+
+                    TrafficTreatment treatment1 = DefaultTrafficTreatment.builder()
+                            .setIpDst(IpAddress.valueOf("10.0.0.123"))
+                            .build();
+
+
+                    ForwardingObjective.Builder builder = DefaultForwardingObjective.builder();
+                    builder.withSelector(selector)
+                            .withTreatment(treatment1)
+                            .withPriority(10)
+                            .withFlag(ForwardingObjective.Flag.VERSATILE)
+                            .fromApp(appId)
+                            .makePermanent();
+
+                    flowObjectiveService.forward(context.inPacket().receivedFrom().deviceId(), builder.add());
+
                 }
             }
         }
@@ -255,8 +283,8 @@ public class LevelManager implements LevelService {
         hostStore.addHostInfo(host);
     }
 
-    /**
-     * Gets an existing Host infomations.
+    /**r
+     * Gets an existing Host information.
      */
     @Override
     public HostInfo getHostInfo(HostId hostId) {
@@ -284,5 +312,13 @@ public class LevelManager implements LevelService {
     @Override
     public void clearHosts(){
         hostStore.clearHosts();
+    }
+
+    /**
+     * Get Level definition.
+     */
+    @Override
+    public Level[] getLevelDef() {
+        return Level.values();
     }
 }

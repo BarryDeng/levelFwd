@@ -3,6 +3,7 @@ package edu.nuaa.levelFwd.impl;
 import com.google.common.collect.Collections2;
 import edu.nuaa.levelFwd.HostInfo;
 import edu.nuaa.levelFwd.HostStore;
+import edu.nuaa.levelFwd.Level;
 import edu.nuaa.levelFwd.LevelRule;
 import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
@@ -62,7 +63,7 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
                 .register(LevelRule.class)
                 .register(MacAddress[].class)
                 .register(TreeSet.class)
-                .register(LevelRule.Level.class);
+                .register(Level.class);
 
         hostSet = storageService.<HostId, HostInfo>consistentMapBuilder()
                 .withSerializer(Serializer.using(serializer.build()))

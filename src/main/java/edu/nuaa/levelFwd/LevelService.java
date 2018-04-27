@@ -38,4 +38,9 @@ public interface LevelService {
      * Clear all Host informations and reset.
      */
     void clearHosts();
+
+    /**
+     * Get Level definition.
+     */
+    Level[] getLevelDef();
 }

@@ -1,5 +1,6 @@
 package edu.nuaa.levelFwd;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -14,8 +15,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -89,7 +92,6 @@ public class LevelWebResource extends AbstractWebResource {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode node = mapper.createObjectNode();
         node.put("level", rule.level().toString());
-        node.put("middleBox", rule.middleBox().toString());
         ArrayNode arrayNode = mapper.createArrayNode();
         for (String s : rule.service()) {
             arrayNode.add(s);
@@ -107,7 +109,25 @@ public class LevelWebResource extends AbstractWebResource {
     @Path("middlebox")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response setMiddleBoxes(InputStream input) throws URISyntaxException {
-        // TODO: Wait for middlebox defined.
+        Level[] levels = get(LevelService.class).getLevelDef();
+
+        JsonNode node;
+        try {
+            node = mapper().readTree(input);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Unable to parse level request", e);
+        }
+
+        Iterator<JsonNode> innerNodes = node.path("middleBox").elements();
+        while (innerNodes.hasNext()) {
+            JsonNode innerNode = innerNodes.next();
+
+            for (Level level : levels) {
+                if (level.getCode() == innerNode.path("code").asInt()) {
+                    level.setMAC(innerNode.path("mac").asText());
+                }
+            }
+        }
         return Response.noContent().build();
     }
 
@@ -123,7 +143,13 @@ public class LevelWebResource extends AbstractWebResource {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode root = mapper.createObjectNode();
         ArrayNode arrayNode = mapper.createArrayNode();
-        // TODO: Wait for middleBox defined.
+        for (Level level : get(LevelService.class).getLevelDef()) {
+            ObjectNode node = mapper.createObjectNode();
+            node.put("name", level.name());
+            node.put("code", level.getCode());
+            node.put("mac", level.getMAC());
+            arrayNode.add(node);
+        }
         root.set("middleBox", arrayNode);
         return Response.ok(root, MediaType.APPLICATION_JSON_TYPE).build();
     }
@@ -135,7 +161,10 @@ public class LevelWebResource extends AbstractWebResource {
     @DELETE
     @Path("middlebox")
     public Response clearMiddleBoxes() {
-        // TODO: Wait for middlebox defined.
+        Level[] levels = get(LevelService.class).getLevelDef();
+        for (Level level : levels) {
+            level.setMAC("11:11:11:11:11:11");
+        }
         return Response.noContent().build();
     }
 }
