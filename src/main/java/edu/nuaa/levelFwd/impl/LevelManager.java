@@ -229,15 +229,10 @@ public class LevelManager implements LevelService {
                         .equals(IpAddress.valueOf("10.0.0.254"))) {
 //                    log.info(arp.toString());
 
-                    HostId id = HostId.hostId(ethPkt.getDestinationMAC());
+                    HostId id = HostId.hostId(ethPkt.getSourceMAC());
                     LevelRule levelRule = getHostLevel(id);
-                    switch (levelRule.level()){
-                       // case LevelRule.Level.WHITELIST:
-                       //     break;
 
-                    }
-
-                    Ethernet resPkt = ARP.buildArpReply(Ip4Address.valueOf("10.0.0.254"), MacAddress.valueOf("11:22:33:44:55:66"), ethPkt);
+                    Ethernet resPkt = ARP.buildArpReply(Ip4Address.valueOf("10.0.0.254"), MacAddress.valueOf(levelRule.level().getMAC()), ethPkt);
 
                     TrafficTreatment treatment = DefaultTrafficTreatment.builder()
                             .setOutput(context.inPacket().receivedFrom().port())
@@ -246,7 +241,6 @@ public class LevelManager implements LevelService {
                     OutboundPacket response = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
                                                                         treatment,
                                                                         ByteBuffer.wrap(resPkt.serialize()));
-
                     packetService.emit(response);
 
                     TrafficSelector selector = DefaultTrafficSelector.builder()
