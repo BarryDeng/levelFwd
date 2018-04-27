@@ -209,6 +209,27 @@ public class LevelManager implements LevelService {
         }
     }
 
+    private void redirectPacket(PacketContext context, IpPrefix preDst, IpAddress dst) {
+        TrafficSelector selector = DefaultTrafficSelector.builder()
+                .matchEthType(Ethernet.TYPE_IPV4)
+                .matchIPDst(preDst)
+                .build();
+
+        TrafficTreatment treatment1 = DefaultTrafficTreatment.builder()
+                .setIpDst(dst)
+                .build();
+
+        ForwardingObjective.Builder builder = DefaultForwardingObjective.builder();
+        builder.withSelector(selector)
+                .withTreatment(treatment1)
+                .withPriority(10)
+                .withFlag(ForwardingObjective.Flag.SPECIFIC)
+                .fromApp(appId)
+                .makePermanent();
+
+        flowObjectiveService.forward(context.inPacket().receivedFrom().deviceId(), builder.add());
+    }
+
     private class InternalPacketListener implements PacketProcessor {
 
         @Override
@@ -243,25 +264,7 @@ public class LevelManager implements LevelService {
                                                                         ByteBuffer.wrap(resPkt.serialize()));
                     packetService.emit(response);
 
-                    TrafficSelector selector = DefaultTrafficSelector.builder()
-                            .matchIPDst(IpPrefix.valueOf("10.0.0.254"))
-                            .build();
-
-                    TrafficTreatment treatment1 = DefaultTrafficTreatment.builder()
-                            .setIpDst(IpAddress.valueOf("10.0.0.123"))
-                            .build();
-
-
-                    ForwardingObjective.Builder builder = DefaultForwardingObjective.builder();
-                    builder.withSelector(selector)
-                            .withTreatment(treatment1)
-                            .withPriority(10)
-                            .withFlag(ForwardingObjective.Flag.VERSATILE)
-                            .fromApp(appId)
-                            .makePermanent();
-
-                    flowObjectiveService.forward(context.inPacket().receivedFrom().deviceId(), builder.add());
-
+                    redirectPacket(context, IpPrefix.valueOf("10.0.0.254/32"), IpAddress.valueOf("10.0.0.123"));
                 }
             }
         }
