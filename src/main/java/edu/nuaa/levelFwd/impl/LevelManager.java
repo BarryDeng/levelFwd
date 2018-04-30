@@ -407,7 +407,7 @@ public class LevelManager implements LevelService {
             HostId id = HostId.hostId(ethPkt.getSourceMAC());
             LevelRule levelRule = getHostLevel(id);
 
-            Ethernet resPkt = ARP.buildArpReply(Ip4Address.valueOf("10.0.0.254"), MacAddress.valueOf(levelRule.level().getMAC()), ethPkt);
+            Ethernet resPkt = ARP.buildArpReply(Ip4Address.valueOf("10.0.0.254"), MacAddress.valueOf(levelRule.level().getPort()), ethPkt);
 
             TrafficTreatment treatment = DefaultTrafficTreatment.builder()
                     .setOutput(context.inPacket().receivedFrom().port())
@@ -472,8 +472,11 @@ public class LevelManager implements LevelService {
                         Host host = hosts.iterator().next();
                         if (ethPkt.getDestinationMAC().equals(host.mac()) &&
                                 pkt.receivedFrom().deviceId().equals(host.location().deviceId())) {
-                            installRule(context, PortNumber.portNumber(4));
-                            log.info("YEYEYE");
+
+                            HostId hostid = HostId.hostId(ethPkt.getSourceMAC());
+                            LevelRule levelRule = getHostLevel(hostid);
+                            installRule(context, PortNumber.portNumber(levelRule.level().getPort()));
+                            log.info("Redirect forwarding port based on user level");
                             return;
                         }
                     }
