@@ -93,7 +93,6 @@ import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.nio.ByteBuffer;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
@@ -147,6 +146,7 @@ public class LevelManager implements LevelService {
 //    private PacketProcessor processor = new ReactivePacketProcessor();
     private PacketProcessor processor = new InternalPacketListener();
     private IdGenerator idGenerator;
+    private String gateWayIp = "10.1.1.254";
 
     private Connection conn = null;
 
@@ -419,13 +419,13 @@ public class LevelManager implements LevelService {
         ARP arp = (ARP) ethPkt.getPayload();
 
         if (IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()).getIp4Address()
-                .equals(IpAddress.valueOf("10.0.0.254"))) {
+                .equals(IpAddress.valueOf(gateWayIp))) {
 //                    log.info(arp.toString());
 
             HostId id = HostId.hostId(ethPkt.getSourceMAC());
             LevelRule levelRule = getHostLevel(id);
 
-            Ethernet resPkt = ARP.buildArpReply(Ip4Address.valueOf("10.0.0.254"), MacAddress.valueOf(levelRule.level().getMAC()), ethPkt);
+            Ethernet resPkt = ARP.buildArpReply(Ip4Address.valueOf(gateWayIp), MacAddress.valueOf(levelRule.level().getPort()), ethPkt);
 
             TrafficTreatment treatment = DefaultTrafficTreatment.builder()
                     .setOutput(context.inPacket().receivedFrom().port())
@@ -564,14 +564,17 @@ public class LevelManager implements LevelService {
             // simply forward out to the destination and bail.
             if (pkt.receivedFrom().deviceId().equals(dst.location().deviceId())) {
                 if (!context.inPacket().receivedFrom().port().equals(dst.location().port())) {
-                    Set<Host> hosts = hostService.getHostsByIp(IpAddress.valueOf("10.0.0.254"));
+                    Set<Host> hosts = hostService.getHostsByIp(IpAddress.valueOf(gateWayIp));
 
                     if (!hosts.isEmpty()) {
                         Host host = hosts.iterator().next();
                         if (ethPkt.getDestinationMAC().equals(host.mac()) &&
                                 pkt.receivedFrom().deviceId().equals(host.location().deviceId())) {
-                            installRule(context, PortNumber.portNumber(4));
-                            log.info("YEYEYE");
+
+                            HostId hostid = HostId.hostId(ethPkt.getSourceMAC());
+                            LevelRule levelRule = getHostLevel(hostid);
+                            installRule(context, PortNumber.portNumber(levelRule.level().getPort()));
+                            log.info("Redirect forwarding port based on user level");
                             return;
                         }
                     }
