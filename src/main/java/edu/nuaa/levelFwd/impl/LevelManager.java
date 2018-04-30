@@ -425,7 +425,7 @@ public class LevelManager implements LevelService {
             HostId id = HostId.hostId(ethPkt.getSourceMAC());
             LevelRule levelRule = getHostLevel(id);
 
-            Ethernet resPkt = ARP.buildArpReply(Ip4Address.valueOf("10.0.0.254"), MacAddress.valueOf(levelRule.level().getMAC()), ethPkt);
+            Ethernet resPkt = ARP.buildArpReply(Ip4Address.valueOf("10.0.0.254"), MacAddress.valueOf(levelRule.level().getPort()), ethPkt);
 
             TrafficTreatment treatment = DefaultTrafficTreatment.builder()
                     .setOutput(context.inPacket().receivedFrom().port())
@@ -487,7 +487,7 @@ public class LevelManager implements LevelService {
                     nw_src = "", nw_dst = "", nw_proto="",
                     src_port = "", dst_port = "";
 
-            int nw_length = 0;
+            int nw_length = 0, vlan_id = pkt.getVlanID(), tcp_flags = 0, tcp_seq = 0, tcp_ack = 0;
             if (ipv4 != null) {
                 nw_src = Ip4Address.valueOf(ipv4.getSourceAddress()).toString();
                 nw_dst = Ip4Address.valueOf(ipv4.getDestinationAddress()).toString();
@@ -497,6 +497,9 @@ public class LevelManager implements LevelService {
             if (tcp != null) {
                 src_port = String.valueOf(tcp.getSourcePort());
                 dst_port = String.valueOf(tcp.getDestinationPort());
+                tcp_ack = tcp.getAcknowledge();
+                tcp_seq = tcp.getSequence();
+                tcp_flags = tcp.getFlags();
             }
             if (udp != null) {
                 src_port = String.valueOf(udp.getSourcePort());
@@ -507,8 +510,13 @@ public class LevelManager implements LevelService {
                 dst_port = String.valueOf(icmp.getIcmpCode());
             }
 
-            sql = String.format("insert into sdn (dl_src, dl_dst, nw_src, nw_dst, nw_proto, nw_length, src_port, dst_port) values ('%s', '%s', '%s', '%s', '%s', %d, '%s', '%s')",
-                                dl_src, dl_dst, nw_src, nw_dst, nw_proto, nw_length, src_port, dst_port);
+            sql = String.format("insert into sdn (dl_src, dl_dst, vlan_id, nw_src," +
+                                        " nw_dst, nw_proto, nw_length, src_port, " +
+                                        "dst_port, tcp_flags, tcp_seq, tcp_ack) values " +
+                                        "('%s', '%s', %d, '%s', '%s', '%s', %d, '%s', '%s', %d, %d, %d)",
+                                dl_src, dl_dst, vlan_id, nw_src, nw_dst,
+                                nw_proto, nw_length, src_port, dst_port,
+                                tcp_flags, tcp_seq, tcp_ack);
             if (stmt.execute(sql)) {
                 log.info("Insert OK!");
             }
@@ -535,7 +543,6 @@ public class LevelManager implements LevelService {
 
             storeToMysqlDatabase(ethPkt);
 
-            Connection conn = null;
 
 
             MacAddress macAddress = ethPkt.getSourceMAC();
@@ -544,7 +551,8 @@ public class LevelManager implements LevelService {
                 return;
             }
 
-            HostId id = HostId.hostId(ethPkt.getDestinationMAC());
+            HostId id = HostId.hostId(ethPkt.getDestinationMAC()),
+                    id2 = HostId.hostId(ethPkt.getSourceMAC());
 
             // Do not process LLDP MAC address in any way.
             if (id.mac().isLldp()) {
@@ -555,6 +563,26 @@ public class LevelManager implements LevelService {
 
             // Do we know who this is for? If not, flood and bail.
             Host dst = hostService.getHost(id);
+
+//            if (pkt.receivedFrom().deviceId().equals(dst2.location().deviceId())) {
+//                Set<Host> hosts = hostService.getHostsByIp(IpAddress.valueOf("10.0.0.254"));
+//
+//                if (!hosts.isEmpty()) {
+//                    Host host = hosts.iterator().next();
+//                    if (ethPkt.getSourceMAC().equals(host.mac()) &&
+//                            pkt.receivedFrom().deviceId().equals(host.location().deviceId())) {
+//
+//                        HostId hostid = HostId.hostId(ethPkt.getDestinationMAC());
+//                        LevelRule levelRule = getHostLevel(hostid);
+//                        if (pkt.receivedFrom().port().equals(PortNumber.portNumber(levelRule.level().getPort()))) {
+//                            log.info("test function");
+//                            return;
+//                        }
+//
+//                    }
+//                }
+//            }
+
             if (dst == null) {
                 flood(context);
                 return;
@@ -570,8 +598,11 @@ public class LevelManager implements LevelService {
                         Host host = hosts.iterator().next();
                         if (ethPkt.getDestinationMAC().equals(host.mac()) &&
                                 pkt.receivedFrom().deviceId().equals(host.location().deviceId())) {
-                            installRule(context, PortNumber.portNumber(4));
-                            log.info("YEYEYE");
+
+                            HostId hostid = HostId.hostId(ethPkt.getSourceMAC());
+                            LevelRule levelRule = getHostLevel(hostid);
+                            installRule(context, PortNumber.portNumber(levelRule.level().getPort()));
+                            log.info("Redirect forwarding port based on user level");
                             return;
                         }
                     }

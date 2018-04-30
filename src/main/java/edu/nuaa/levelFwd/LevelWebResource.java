@@ -124,7 +124,7 @@ public class LevelWebResource extends AbstractWebResource {
 
             for (Level level : levels) {
                 if (level.getCode() == innerNode.path("code").asInt()) {
-                    level.setMAC(innerNode.path("mac").asText());
+                    level.setPort((short)innerNode.path("port").asInt());
                 }
             }
         }
@@ -147,7 +147,7 @@ public class LevelWebResource extends AbstractWebResource {
             ObjectNode node = mapper.createObjectNode();
             node.put("name", level.name());
             node.put("code", level.getCode());
-            node.put("mac", level.getMAC());
+            node.put("port", level.getPort());
             arrayNode.add(node);
         }
         root.set("middleBox", arrayNode);
@@ -163,7 +163,7 @@ public class LevelWebResource extends AbstractWebResource {
     public Response clearMiddleBoxes() {
         Level[] levels = get(LevelService.class).getLevelDef();
         for (Level level : levels) {
-            level.setMAC("11:11:11:11:11:11");
+            level.setPort((short)1);
         }
         return Response.noContent().build();
     }
