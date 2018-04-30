@@ -31,6 +31,7 @@ import org.onlab.packet.ARP;
 import org.onlab.packet.Ethernet;
 import org.onlab.packet.ICMP;
 import org.onlab.packet.ICMP6;
+import org.onlab.packet.IP;
 import org.onlab.packet.IPv4;
 import org.onlab.packet.IPv6;
 import org.onlab.packet.Ip4Address;
@@ -43,6 +44,7 @@ import org.onlab.packet.TCP;
 import org.onlab.packet.TpPort;
 import org.onlab.packet.UDP;
 import org.onlab.packet.VlanId;
+import org.onosproject.cli.net.IpProtocol;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.core.IdGenerator;
@@ -84,14 +86,21 @@ import org.onosproject.net.topology.TopologyEvent;
 import org.onosproject.net.topology.TopologyListener;
 import org.onosproject.net.topology.TopologyService;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.jdbc.DataSourceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import java.nio.ByteBuffer;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -128,12 +137,19 @@ public class LevelManager implements LevelService {
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected TopologyService topologyService;
 
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected DataSourceFactory dataSourceFactory;
+
+
     private final Logger log = LoggerFactory.getLogger(getClass());
     private ApplicationId appId;
     private HostListener hostListener = new InternalHostListener();
 //    private PacketProcessor processor = new ReactivePacketProcessor();
     private PacketProcessor processor = new InternalPacketListener();
     private IdGenerator idGenerator;
+
+    private Connection conn = null;
+
 
     private ExecutorService blackHoleExecutor;
 
@@ -148,6 +164,8 @@ public class LevelManager implements LevelService {
     @Activate
     protected void activate(ComponentContext context) {
         appId = coreService.registerApplication("edu.nuaa.levelFwd");
+
+        initMysqlConnection();
 
         packetService.addProcessor(processor, PacketProcessor.director(1));
         requestIntercepts();
@@ -424,6 +442,81 @@ public class LevelManager implements LevelService {
         return false;
     }
 
+    private void initMysqlConnection() {
+//        String url = "jdbc:mysql://localhost:3306/sdn?user=root&passwd=root&useUnicode=true&characterEncoding=UTF8";
+        Properties dbProps = new Properties();
+        dbProps.put(DataSourceFactory.JDBC_DATABASE_NAME, "sdn");
+        dbProps.put(DataSourceFactory.JDBC_USER, "root");
+        dbProps.put(DataSourceFactory.JDBC_PASSWORD, "root");
+        dbProps.put(DataSourceFactory.JDBC_SERVER_NAME, "127.0.0.1");
+        dbProps.put(DataSourceFactory.JDBC_PORT_NUMBER, "3306");
+
+        try {
+            DataSource dataSource = dataSourceFactory.createDataSource(dbProps);
+            // Or
+            // dataSourceFactory.createConnectionPoolDataSource(dbProps);
+            conn = dataSource.getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void storeToMysqlDatabase(Ethernet pkt) {
+        String sql;
+        try {
+            Statement stmt = conn.createStatement();
+
+            IPv4 ipv4 = null;
+            TCP tcp = null;
+            UDP udp = null;
+            ICMP icmp = null;
+            if (pkt.getPayload() instanceof IPv4) {
+                ipv4 = (IPv4) pkt.getPayload();
+
+                if (ipv4.getPayload() instanceof TCP) {
+                    tcp = (TCP) ipv4.getPayload();
+                } else if (ipv4.getPayload() instanceof UDP) {
+                    udp = (UDP) ipv4.getPayload();
+                } else if (ipv4.getPayload() instanceof ICMP) {
+                    icmp = (ICMP) ipv4.getPayload();
+                }
+            }
+
+            String dl_src = pkt.getSourceMAC().toString(),
+                    dl_dst = pkt.getDestinationMAC().toString(),
+                    nw_src = "", nw_dst = "", nw_proto="",
+                    src_port = "", dst_port = "";
+
+            int nw_length = 0;
+            if (ipv4 != null) {
+                nw_src = Ip4Address.valueOf(ipv4.getSourceAddress()).toString();
+                nw_dst = Ip4Address.valueOf(ipv4.getDestinationAddress()).toString();
+                nw_proto = String.valueOf(ipv4.getProtocol());
+                nw_length = ipv4.getTotalLength();
+            }
+            if (tcp != null) {
+                src_port = String.valueOf(tcp.getSourcePort());
+                dst_port = String.valueOf(tcp.getDestinationPort());
+            }
+            if (udp != null) {
+                src_port = String.valueOf(udp.getSourcePort());
+                dst_port = String.valueOf(udp.getDestinationPort());
+            }
+            if (icmp != null) {
+                src_port = String.valueOf(icmp.getIcmpType());
+                dst_port = String.valueOf(icmp.getIcmpCode());
+            }
+
+            sql = String.format("insert into sdn (dl_src, dl_dst, nw_src, nw_dst, nw_proto, nw_length, src_port, dst_port) values ('%s', '%s', '%s', '%s', '%s', %d, '%s', '%s')",
+                                dl_src, dl_dst, nw_src, nw_dst, nw_proto, nw_length, src_port, dst_port);
+            if (stmt.execute(sql)) {
+                log.info("Insert OK!");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private class InternalPacketListener implements PacketProcessor {
 
         @Override
@@ -439,6 +532,11 @@ public class LevelManager implements LevelService {
             if (ethPkt == null) {
                 return;
             }
+
+            storeToMysqlDatabase(ethPkt);
+
+            Connection conn = null;
+
 
             MacAddress macAddress = ethPkt.getSourceMAC();
             // Bail if this is deemed to be a control packet.
@@ -568,6 +666,8 @@ public class LevelManager implements LevelService {
         Ethernet inPkt = context.inPacket().parsed();
         TrafficSelector.Builder selectorBuilder = DefaultTrafficSelector.builder();
 
+
+
         // If PacketOutOnly or ARP packet than forward directly to output port
         if (inPkt.getEtherType() == Ethernet.TYPE_ARP) {
             packetOut(context, portNumber);
@@ -577,6 +677,39 @@ public class LevelManager implements LevelService {
         selectorBuilder.matchInPort(context.inPacket().receivedFrom().port())
                 .matchEthSrc(inPkt.getSourceMAC())
                 .matchEthDst(inPkt.getDestinationMAC());
+
+        if (inPkt.getEtherType() == Ethernet.TYPE_IPV4) {
+            IPv4 ipv4Packet = (IPv4) inPkt.getPayload();
+            byte ipv4Protocol = ipv4Packet.getProtocol();
+            Ip4Prefix matchIp4SrcPrefix =
+                    Ip4Prefix.valueOf(ipv4Packet.getSourceAddress(),
+                                      Ip4Prefix.MAX_MASK_LENGTH);
+            Ip4Prefix matchIp4DstPrefix =
+                    Ip4Prefix.valueOf(ipv4Packet.getDestinationAddress(),
+                                      Ip4Prefix.MAX_MASK_LENGTH);
+            selectorBuilder.matchEthType(Ethernet.TYPE_IPV4)
+                    .matchIPSrc(matchIp4SrcPrefix)
+                    .matchIPDst(matchIp4DstPrefix);
+
+            if (ipv4Protocol == IPv4.PROTOCOL_TCP) {
+                TCP tcpPacket = (TCP) ipv4Packet.getPayload();
+                selectorBuilder.matchIPProtocol(ipv4Protocol)
+                        .matchTcpSrc(TpPort.tpPort(tcpPacket.getSourcePort()))
+                        .matchTcpDst(TpPort.tpPort(tcpPacket.getDestinationPort()));
+            }
+            if (ipv4Protocol == IPv4.PROTOCOL_UDP) {
+                UDP udpPacket = (UDP) ipv4Packet.getPayload();
+                selectorBuilder.matchIPProtocol(ipv4Protocol)
+                        .matchUdpSrc(TpPort.tpPort(udpPacket.getSourcePort()))
+                        .matchUdpDst(TpPort.tpPort(udpPacket.getDestinationPort()));
+            }
+            if (ipv4Protocol == IPv4.PROTOCOL_ICMP) {
+                ICMP icmpPacket = (ICMP) ipv4Packet.getPayload();
+                selectorBuilder.matchIPProtocol(ipv4Protocol)
+                        .matchIcmpType(icmpPacket.getIcmpType())
+                        .matchIcmpCode(icmpPacket.getIcmpCode());
+            }
+        }
 
         TrafficTreatment treatment = DefaultTrafficTreatment.builder()
                 .setOutput(portNumber)
