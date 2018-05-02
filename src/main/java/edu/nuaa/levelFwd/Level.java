@@ -4,11 +4,11 @@ package edu.nuaa.levelFwd;
 import org.onlab.packet.MacAddress;
 
 public enum Level {
-    WHITELIST(10000,(short)1, ""),
-    RELIABLE(10001, (short)2, ""),
-    NORMAL(10002, (short)4, ""),
-    THREAT(10003, (short)5, ""),
-    BLACKLIST(10004, (short)6, "");
+    WHITELIST(10000,(short)1, "11:11:11:11:11:11"),
+    RELIABLE(10001, (short)2, "11:11:11:11:11:11"),
+    NORMAL(10002, (short)5, "11:11:11:11:11:11"),
+    THREAT(10003, (short)6, "11:11:11:11:11:11"),
+    BLACKLIST(10004, (short)7, "11:11:11:11:11:11");
 
     private int code;
     private short port;

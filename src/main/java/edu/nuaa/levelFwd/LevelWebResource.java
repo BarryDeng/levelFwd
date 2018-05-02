@@ -55,7 +55,9 @@ public class LevelWebResource extends AbstractWebResource {
             node.put("vlanId", info.vlanId().toString());
             node.put("deviceId", info.toString());
             node.put("mac", info.srcMAC().toString());
-            node.put("rule", info.rule().toString());
+            node.put("port", info.rule().level().getPort());
+            node.put("levels", info.rule().service().toArray().toString());
+
 
             arrayNode.add(node);
         }
@@ -125,6 +127,7 @@ public class LevelWebResource extends AbstractWebResource {
             for (Level level : levels) {
                 if (level.getCode() == innerNode.path("code").asInt()) {
                     level.setPort((short)innerNode.path("port").asInt());
+                    level.setMac(innerNode.path("mac").asText());
                 }
             }
         }
@@ -148,6 +151,7 @@ public class LevelWebResource extends AbstractWebResource {
             node.put("name", level.name());
             node.put("code", level.getCode());
             node.put("port", level.getPort());
+            node.put("mac", level.getMac().toString());
             arrayNode.add(node);
         }
         root.set("middleBox", arrayNode);

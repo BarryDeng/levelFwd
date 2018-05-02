@@ -595,12 +595,20 @@ public class LevelManager implements LevelService {
                     Set<Host> hosts = hostService.getHostsByIp(IpAddress.valueOf(gateWayIp));
 
                     if (!hosts.isEmpty()) {
-                        Host host = hosts.iterator().next();
-                        if (ethPkt.getDestinationMAC().equals(host.mac()) &&
-                                pkt.receivedFrom().deviceId().equals(host.location().deviceId())) {
+                        boolean isGateway = false;
+                        for (Host host : hosts) {
+                            if (ethPkt.getDestinationMAC().equals(host.mac())) {
+                                isGateway = true;
+                                break;
+                            }
+                        }
 
+                        if (isGateway) {
                             HostId hostid = HostId.hostId(ethPkt.getSourceMAC());
                             LevelRule levelRule = getHostLevel(hostid);
+
+                            context.treatmentBuilder().setEthDst(levelRule.level().getMac());
+
                             installRule(context, PortNumber.portNumber(levelRule.level().getPort()));
                             log.info("Redirect forwarding port based on user level");
                             return;
