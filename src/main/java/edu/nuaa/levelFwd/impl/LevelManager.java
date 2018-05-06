@@ -30,21 +30,15 @@ import org.apache.felix.scr.annotations.Service;
 import org.onlab.packet.ARP;
 import org.onlab.packet.Ethernet;
 import org.onlab.packet.ICMP;
-import org.onlab.packet.ICMP6;
-import org.onlab.packet.IP;
 import org.onlab.packet.IPv4;
-import org.onlab.packet.IPv6;
 import org.onlab.packet.Ip4Address;
 import org.onlab.packet.Ip4Prefix;
-import org.onlab.packet.Ip6Prefix;
 import org.onlab.packet.IpAddress;
 import org.onlab.packet.IpPrefix;
 import org.onlab.packet.MacAddress;
 import org.onlab.packet.TCP;
 import org.onlab.packet.TpPort;
 import org.onlab.packet.UDP;
-import org.onlab.packet.VlanId;
-import org.onosproject.cli.net.IpProtocol;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.core.IdGenerator;
@@ -55,8 +49,10 @@ import org.onosproject.net.Host;
 import org.onosproject.net.HostId;
 import org.onosproject.net.Link;
 import org.onosproject.net.Path;
+import org.onosproject.net.Port;
 import org.onosproject.net.PortNumber;
 import org.onosproject.net.device.DeviceService;
+import org.onosproject.net.edge.EdgePortService;
 import org.onosproject.net.flow.DefaultTrafficSelector;
 import org.onosproject.net.flow.DefaultTrafficTreatment;
 import org.onosproject.net.flow.FlowEntry;
@@ -75,6 +71,7 @@ import org.onosproject.net.host.HostEvent;
 import org.onosproject.net.host.HostListener;
 import org.onosproject.net.host.HostService;
 import org.onosproject.net.link.LinkEvent;
+import org.onosproject.net.neighbour.NeighbourResolutionService;
 import org.onosproject.net.packet.DefaultOutboundPacket;
 import org.onosproject.net.packet.InboundPacket;
 import org.onosproject.net.packet.OutboundPacket;
@@ -125,6 +122,12 @@ public class LevelManager implements LevelService {
     protected DeviceService deviceService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected EdgePortService edgeService;
+
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    protected NeighbourResolutionService neighbourResolutionService;
+
+    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     protected PacketService packetService;
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
@@ -150,6 +153,7 @@ public class LevelManager implements LevelService {
 
     private Connection conn = null;
 
+    // private EdgePortListener edgeListener = new
 
     private ExecutorService blackHoleExecutor;
 
@@ -167,6 +171,7 @@ public class LevelManager implements LevelService {
 
         initMysqlConnection();
 
+
         packetService.addProcessor(processor, PacketProcessor.director(1));
         requestIntercepts();
 
@@ -177,6 +182,8 @@ public class LevelManager implements LevelService {
         hostService.addListener(hostListener);
 
         idGenerator = coreService.getIdGenerator("host-ids");
+
+//        edgeService.addListener();
 
         log.info("Started");
     }
@@ -525,187 +532,13 @@ public class LevelManager implements LevelService {
         }
     }
 
-    private class InternalPacketListener implements PacketProcessor {
-
-        @Override
-        public void process(PacketContext context) {
-
-            if (context.isHandled()) {
-                return;
-            }
-
-            InboundPacket pkt = context.inPacket();
-            Ethernet ethPkt = pkt.parsed();
-
-            if (ethPkt == null) {
-                return;
-            }
-
-            storeToMysqlDatabase(ethPkt);
-
-
-
-            MacAddress macAddress = ethPkt.getSourceMAC();
-            // Bail if this is deemed to be a control packet.
-            if (isControlPacket(ethPkt)) {
-                return;
-            }
-
-            HostId id = HostId.hostId(ethPkt.getDestinationMAC()),
-                    id2 = HostId.hostId(ethPkt.getSourceMAC());
-
-            // Do not process LLDP MAC address in any way.
-            if (id.mac().isLldp()) {
-                return;
-            }
-
-//            fakeArp(context, ethPkt);
-
-            // Do we know who this is for? If not, flood and bail.
-            Host dst = hostService.getHost(id);
-
-//            if (pkt.receivedFrom().deviceId().equals(dst2.location().deviceId())) {
-//                Set<Host> hosts = hostService.getHostsByIp(IpAddress.valueOf("10.0.0.254"));
-//
-//                if (!hosts.isEmpty()) {
-//                    Host host = hosts.iterator().next();
-//                    if (ethPkt.getSourceMAC().equals(host.mac()) &&
-//                            pkt.receivedFrom().deviceId().equals(host.location().deviceId())) {
-//
-//                        HostId hostid = HostId.hostId(ethPkt.getDestinationMAC());
-//                        LevelRule levelRule = getHostLevel(hostid);
-//                        if (pkt.receivedFrom().port().equals(PortNumber.portNumber(levelRule.level().getPort()))) {
-//                            log.info("test function");
-//                            return;
-//                        }
-//
-//                    }
-//                }
-//            }
-
-            if (dst == null) {
-                flood(context);
-                return;
-            }
-
-            // Are we on an edge switch that our destination is on? If so,
-            // simply forward out to the destination and bail.
-            if (pkt.receivedFrom().deviceId().equals(dst.location().deviceId())) {
-                if (!context.inPacket().receivedFrom().port().equals(dst.location().port())) {
-                    Set<Host> hosts = hostService.getHostsByIp(IpAddress.valueOf(gateWayIp));
-
-                    if (!hosts.isEmpty()) {
-                        boolean isGateway = false;
-                        for (Host host : hosts) {
-                            if (ethPkt.getDestinationMAC().equals(host.mac())) {
-                                isGateway = true;
-                                break;
-                            }
-                        }
-
-                        if (isGateway) {
-                            HostId hostid = HostId.hostId(ethPkt.getSourceMAC());
-                            LevelRule levelRule = getHostLevel(hostid);
-
-                            context.treatmentBuilder().setEthDst(levelRule.level().getMac());
-
-                            installRule(context, PortNumber.portNumber(levelRule.level().getPort()));
-                            log.info("Redirect forwarding port based on user level");
-                            return;
-                        }
-                    }
-                    installRule(context, dst.location().port());
-                }
-                return;
-            }
-
-            // Otherwise, get a set of paths that lead from here to the
-            // destination edge switch.
-            Set<Path> paths =
-                    topologyService.getPaths(topologyService.currentTopology(),
-                                             pkt.receivedFrom().deviceId(),
-                                             dst.location().deviceId());
-            if (paths.isEmpty()) {
-                // If there are no paths, flood and bail.
-                flood(context);
-                return;
-            }
-
-            // Otherwise, pick a path that does not lead back to where we
-            // came from; if no such path, flood and bail.
-            Path path = pickForwardPathIfPossible(paths, pkt.receivedFrom().port());
-            if (path == null) {
-                log.warn("Don't know where to go from here {} for {} -> {}",
-                         pkt.receivedFrom(), ethPkt.getSourceMAC(), ethPkt.getDestinationMAC());
-                flood(context);
-                return;
-            }
-
-            // Otherwise forward and be done with it.
-            installRule(context, path.src().port());
-
-        }
-    }
-
-    @Override
-    public List<HostInfo> getHostInfos(){
-        return hostStore.getHostInfos();
-    }
-
-    @Override
-    public void addHostInfo(HostInfo host){
-        hostStore.addHostInfo(host);
-    }
-
-    /**r
-     * Gets an existing Host information.
-     */
-    @Override
-    public HostInfo getHostInfo(HostId hostId) {
-        return hostStore.getHostInfoById(hostId);
-    }
-
-    /**
-     *  Gets an existing Host level by hostId
-     */
-    @Override
-    public LevelRule getHostLevel(HostId hostId){
-        return hostStore.getHostLevelById(hostId);
-    }
-    /**
-     * Removes an existing Host infomations by host id.
-     */
-    @Override
-    public void removeHostInfo(HostId hostId) {
-        hostStore.removeHostInfo(hostId);
-    }
-
-    /**
-     * Clear all Host infomations and reset.
-     */
-    @Override
-    public void clearHosts(){
-        hostStore.clearHosts();
-    }
-
-    /**
-     * Get Level definition.
-     */
-    @Override
-    public Level[] getLevelDef() {
-        return Level.values();
-    }
-
     // Install a rule forwarding the packet to the specified port.
-    private void installRule(PacketContext context, PortNumber portNumber) {
+    private void installRule(PacketContext context, Ethernet inPkt, PortNumber portNumber) {
         //
         // We don't support (yet) buffer IDs in the Flow Service so
         // packet out first.
         //
-        Ethernet inPkt = context.inPacket().parsed();
         TrafficSelector.Builder selectorBuilder = DefaultTrafficSelector.builder();
-
-
 
         // If PacketOutOnly or ARP packet than forward directly to output port
         if (inPkt.getEtherType() == Ethernet.TYPE_ARP) {
@@ -774,6 +607,572 @@ public class LevelManager implements LevelService {
 
         packetOut(context, portNumber);
 
+    }
+
+    @Override
+    public List<HostInfo> getHostInfos() {
+        return hostStore.getHostInfos();
+    }
+
+    @Override
+    public void addHostInfo(HostInfo host) {
+        hostStore.addHostInfo(host);
+    }
+
+    /**
+     * r
+     * Gets an existing Host information.
+     */
+    @Override
+    public HostInfo getHostInfo(HostId hostId) {
+        return hostStore.getHostInfoById(hostId);
+    }
+
+    /**
+     * Gets an existing Host level by hostId
+     */
+    @Override
+    public LevelRule getHostLevel(HostId hostId) {
+        return hostStore.getHostLevelById(hostId);
+    }
+
+    /**
+     * Removes an existing Host infomations by host id.
+     */
+    @Override
+    public void removeHostInfo(HostId hostId) {
+        hostStore.removeHostInfo(hostId);
+    }
+
+    /**
+     * Clear all Host infomations and reset.
+     */
+    @Override
+    public void clearHosts() {
+        hostStore.clearHosts();
+    }
+
+    /**
+     * Get Level definition.
+     */
+    @Override
+    public Level[] getLevelDef() {
+        return Level.values();
+    }
+
+    // Install a rule forwarding the packet to the specified port.
+    private void installRule2(PacketContext context, byte[] src, byte[] dst, PortNumber portNumber) {
+        TrafficSelector.Builder selectorBuilder = DefaultTrafficSelector.builder();
+        Ethernet inPkt = context.inPacket().parsed();
+
+        // If PacketOutOnly or ARP packet than forward directly to output port
+        if (inPkt.getEtherType() == Ethernet.TYPE_ARP) {
+            packetOut(context, portNumber);
+            return;
+        }
+
+        selectorBuilder.matchInPort(context.inPacket().receivedFrom().port())
+                .matchEthSrc(inPkt.getSourceMAC())
+                .matchEthDst(inPkt.getDestinationMAC());
+
+        if (inPkt.getEtherType() == Ethernet.TYPE_IPV4) {
+            IPv4 ipv4Packet = (IPv4) inPkt.getPayload();
+            byte ipv4Protocol = ipv4Packet.getProtocol();
+            Ip4Prefix matchIp4SrcPrefix =
+                    Ip4Prefix.valueOf(ipv4Packet.getSourceAddress(),
+                                      Ip4Prefix.MAX_MASK_LENGTH);
+            Ip4Prefix matchIp4DstPrefix =
+                    Ip4Prefix.valueOf(ipv4Packet.getDestinationAddress(),
+                                      Ip4Prefix.MAX_MASK_LENGTH);
+            selectorBuilder.matchEthType(Ethernet.TYPE_IPV4)
+                    .matchIPSrc(matchIp4SrcPrefix)
+                    .matchIPDst(matchIp4DstPrefix);
+
+            if (ipv4Protocol == IPv4.PROTOCOL_TCP) {
+                TCP tcpPacket = (TCP) ipv4Packet.getPayload();
+                selectorBuilder.matchIPProtocol(ipv4Protocol)
+                        .matchTcpSrc(TpPort.tpPort(tcpPacket.getSourcePort()))
+                        .matchTcpDst(TpPort.tpPort(tcpPacket.getDestinationPort()));
+            }
+            if (ipv4Protocol == IPv4.PROTOCOL_UDP) {
+                UDP udpPacket = (UDP) ipv4Packet.getPayload();
+                selectorBuilder.matchIPProtocol(ipv4Protocol)
+                        .matchUdpSrc(TpPort.tpPort(udpPacket.getSourcePort()))
+                        .matchUdpDst(TpPort.tpPort(udpPacket.getDestinationPort()));
+            }
+            if (ipv4Protocol == IPv4.PROTOCOL_ICMP) {
+                ICMP icmpPacket = (ICMP) ipv4Packet.getPayload();
+                selectorBuilder.matchIPProtocol(ipv4Protocol)
+                        .matchIcmpType(icmpPacket.getIcmpType())
+                        .matchIcmpCode(icmpPacket.getIcmpCode());
+            }
+        }
+
+        TrafficTreatment.Builder treatmentbuilder = DefaultTrafficTreatment.builder()
+                .setIpSrc(IpAddress.valueOf(IpAddress.Version.INET, src));
+
+        if (dst != MacAddress.ZERO.toBytes()) {
+            treatmentbuilder.setIpDst(IpAddress.valueOf(IpAddress.Version.INET, dst));
+        }
+        TrafficTreatment treatment = treatmentbuilder.setOutput(portNumber)
+                .build();
+
+        ForwardingObjective forwardingObjective = DefaultForwardingObjective.builder()
+                .withSelector(selectorBuilder.build())
+                .withTreatment(treatment)
+                .withPriority(10)
+                .withFlag(ForwardingObjective.Flag.VERSATILE)
+                .fromApp(appId)
+                .makeTemporary(10)
+                .add();
+
+        flowObjectiveService.forward(context.inPacket().receivedFrom().deviceId(),
+                                     forwardingObjective);
+
+    }
+
+    private class InternalPacketListener implements PacketProcessor {
+
+        private boolean addrInMiddleBox(IpAddress addr) {
+//            Set<Host> hosts = hostService.getHostsByIp(IpAddress.valueOf(gateWayIp));
+////                    MacAddress[] addresses = new MacAddress[]{
+////                            MacAddress.valueOf("00:00:00:02:00:01"),
+////                            MacAddress.valueOf("00:00:00:02:01:01"),
+////                            MacAddress.valueOf("00:00:00:02:02:01"),
+////                    };
+//
+//            if (!hosts.isEmpty()) {
+//                for (Host host : hosts) {
+//                    if (mac.equals(host.mac())) {
+//                        return true;
+//                    }
+//                }
+//            }
+//            return false;
+            IpAddress[] middleboxes = new IpAddress[]{
+                    IpAddress.valueOf("10.1.0.254"),
+                    IpAddress.valueOf("10.2.0.254"),
+                    IpAddress.valueOf("10.3.0.254")
+            };
+            for (IpAddress item : middleboxes) {
+                if (addr.equals(item)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean addrInMiddleBox(MacAddress addr) {
+            // TODO: HACK!
+            MacAddress[] middleboxes = new MacAddress[]{
+                    MacAddress.valueOf("00:00:00:00:01:00"),
+                    MacAddress.valueOf("00:00:00:01:02:00"),
+                    MacAddress.valueOf("00:00:00:02:03:00"),
+            };
+
+            for (MacAddress item : middleboxes) {
+                if (item.equals(addr)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private IpAddress nat(IpAddress addr, int direction) {
+            IpAddress[] src = new IpAddress[]{
+                    IpAddress.valueOf("10.0.0.1"),
+                    IpAddress.valueOf("10.0.0.2"),
+                    IpAddress.valueOf("10.0.0.3"),
+                    IpAddress.valueOf("10.0.0.4"),
+                    IpAddress.valueOf("10.0.0.5"),
+                    IpAddress.valueOf("10.0.0.6"),
+            };
+
+            IpAddress[] dst = new IpAddress[]{
+                    IpAddress.valueOf("10.1.0.1"),
+                    IpAddress.valueOf("10.2.0.2"),
+                    IpAddress.valueOf("10.3.0.3"),
+                    IpAddress.valueOf("10.1.0.4"),
+                    IpAddress.valueOf("10.2.0.5"),
+                    IpAddress.valueOf("10.3.0.6"),
+            };
+
+            if (direction == 1) {
+                for (int i = 0; i < src.length; ++i) {
+                    if (src[i].equals(addr)) {
+                        return dst[i];
+                    }
+                }
+            } else {
+                for (int i = 0; i < dst.length; ++i) {
+                    if (dst[i].equals(addr)) {
+                        return src[i];
+                    }
+                }
+            }
+            log.info("NAT: " + addr.toString() + " " + direction + " ERROR! ");
+            return null;
+        }
+
+        private IpAddress nat2(IpAddress src, int direction) {
+            IpAddress[] srcs = new IpAddress[]{
+                    IpAddress.valueOf("10.0.0.1"),
+                    IpAddress.valueOf("10.0.0.2"),
+                    IpAddress.valueOf("10.0.0.3"),
+                    IpAddress.valueOf("10.0.0.4"),
+                    IpAddress.valueOf("10.0.0.5"),
+                    IpAddress.valueOf("10.0.0.6"),
+            };
+
+            IpAddress[] dsts = new IpAddress[]{
+                    IpAddress.valueOf("10.1.0.254"),
+                    IpAddress.valueOf("10.2.0.254"),
+                    IpAddress.valueOf("10.3.0.254"),
+                    IpAddress.valueOf("10.1.0.254"),
+                    IpAddress.valueOf("10.2.0.254"),
+                    IpAddress.valueOf("10.3.0.254"),
+            };
+
+            if (direction == 1) {
+                for (int i = 0; i < srcs.length; ++i) {
+                    if (srcs[i].equals(src)) {
+                        return dsts[i];
+                    }
+                }
+            } else {
+                return IpAddress.valueOf("10.0.0.254");
+            }
+            log.info("NAT2: " + src.toString() + " " + direction + " ERROR! ");
+            return null;
+        }
+
+        @Override
+        public void process(PacketContext context) {
+
+            if (context.isHandled()) {
+                return;
+            }
+
+            InboundPacket pkt = context.inPacket();
+            Ethernet ethPkt = pkt.parsed();
+
+            if (ethPkt == null) {
+                return;
+            }
+
+            // storeToMysqlDatabase(ethPkt);
+
+            MacAddress macAddress = ethPkt.getSourceMAC();
+            // Bail if this is deemed to be a control packet.
+            if (isControlPacket(ethPkt)) {
+                return;
+            }
+
+            HostId id = HostId.hostId(ethPkt.getDestinationMAC()),
+                    id2 = HostId.hostId(ethPkt.getSourceMAC());
+
+            // Do not process LLDP MAC address in any way.
+            if (id.mac().isLldp()) {
+                return;
+            }
+
+//            fakeArp(context, ethPkt);
+
+            // Do we know who this is for? If not, flood and bail.
+            Host dst = hostService.getHost(id),
+                    src = hostService.getHost(id2);
+
+//            if (pkt.receivedFrom().deviceId().equals(dst2.location().deviceId())) {
+//                Set<Host> hosts = hostService.getHostsByIp(IpAddress.valueOf("10.0.0.254"));
+//
+//                if (!hosts.isEmpty()) {
+//                    Host host = hosts.iterator().next();
+//                    if (ethPkt.getSourceMAC().equals(host.mac()) &&
+//                            pkt.receivedFrom().deviceId().equals(host.location().deviceId())) {
+//
+//                        HostId hostid = HostId.hostId(ethPkt.getDestinationMAC());
+//                        LevelRule levelRule = getHostLevel(hostid);
+//                        if (pkt.receivedFrom().port().equals(PortNumber.portNumber(levelRule.level().getPort()))) {
+//                            log.info("test function");
+//                            return;
+//                        }
+//
+//                    }
+//                }
+//            }
+
+
+            if (pkt.receivedFrom().deviceId().equals(src.location().deviceId())) {
+                // ARP Packet
+                if (pkt.parsed().getEtherType() == Ethernet.TYPE_ARP) {
+                    Ethernet ethpkt = pkt.parsed();
+                    ARP arp = (ARP) ethPkt.getPayload();
+                    // ARP send from MiddleBox
+                    // SRC: 10.1.0.254 -> 10.0.0.254
+                    // DST: 10.1.0.1 -> 10.0.0.1
+                    if (addrInMiddleBox(IpAddress.valueOf(IpAddress.Version.INET, arp.getSenderProtocolAddress()))) {
+                        arp.setTargetProtocolAddress(nat(IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()), 2).toOctets());
+                        arp.setSenderProtocolAddress(nat2(IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()), 2).toOctets());
+                        PortNumber port = PortNumber.FLOOD;
+
+                        if (dst != null) {
+                            Set<Path> paths =
+                                    topologyService.getPaths(topologyService.currentTopology(),
+                                                             pkt.receivedFrom().deviceId(),
+                                                             dst.location().deviceId());
+                            if (!paths.isEmpty()) {
+                                Path path = pickForwardPathIfPossible(paths, pkt.receivedFrom().port());
+                                if (path == null) {
+                                    log.warn("Don't know where to go from here {} for {} -> {}",
+                                             pkt.receivedFrom(), ethPkt.getSourceMAC(), ethPkt.getDestinationMAC());
+                                } else {
+                                    port = path.src().port();
+                                }
+                            }
+                        }
+                        ethpkt.setPayload(arp);
+                        ethpkt.resetChecksum();
+
+                        context.block();
+                        if (port == PortNumber.FLOOD) {
+                            for (Port p : deviceService.getPorts(context.inPacket().receivedFrom().deviceId())) {
+                                if (p.number().equals(context.inPacket().receivedFrom().port())) {
+                                    continue;
+                                }
+                                OutboundPacket outboundPacket = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
+                                                                                          DefaultTrafficTreatment.builder().setOutput(p.number()).build(),
+                                                                                          ByteBuffer.wrap(ethpkt.serialize()));
+
+                                packetService.emit(outboundPacket);
+                            }
+                        } else {
+                            OutboundPacket outboundPacket = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
+                                                                                      DefaultTrafficTreatment.builder().setOutput(port).build(),
+                                                                                      ByteBuffer.wrap(ethpkt.serialize()));
+                            packetService.emit(outboundPacket);
+                        }
+                        return;
+                        // ARP send from host
+                        // SRC: 10.0.0.1 -> 10.1.0.1
+                        // DST: 10.0.0.254 -> 10.1.0.254
+                    } else if (IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()).equals(IpAddress.valueOf("10.0.0.254"))) {
+                        arp.setTargetProtocolAddress(nat2(IpAddress.valueOf(IpAddress.Version.INET, arp.getSenderProtocolAddress()), 1).toOctets());
+                        arp.setSenderProtocolAddress(nat(IpAddress.valueOf(IpAddress.Version.INET, arp.getSenderProtocolAddress()), 1).toOctets());
+                        ethpkt.setPayload(arp);
+                        ethpkt.resetChecksum();
+
+                        context.block();
+                        for (Port port : deviceService.getPorts(context.inPacket().receivedFrom().deviceId())) {
+                            if (port.number().equals(context.inPacket().receivedFrom().port())) {
+                                continue;
+                            }
+                            OutboundPacket outboundPacket = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
+                                                                                      DefaultTrafficTreatment.builder().setOutput(port.number()).build(),
+                                                                                      ByteBuffer.wrap(ethpkt.serialize()));
+
+                            packetService.emit(outboundPacket);
+                        }
+                        return;
+                    }
+                    // IPv4
+                } else if (pkt.parsed().getEtherType() == Ethernet.TYPE_IPV4) {
+                    Ethernet ethpkt = pkt.parsed();
+                    IPv4 iPv4 = (IPv4) ethpkt.getPayload();
+                    // IPv4 send from middlebox
+                    // DST 10.1.0.1 -> 10.0.0.1
+                    if (addrInMiddleBox(ethpkt.getSourceMAC())) {
+                        // Don't handle OSPF Packet.
+                        if (iPv4.getProtocol() == 89) {
+                            return;
+                        }
+
+                        PortNumber port = PortNumber.FLOOD;
+
+                        byte[] modsrc = MacAddress.ZERO.toBytes();
+                        byte[] moddst = MacAddress.ZERO.toBytes();
+
+                        Set<Path> paths =
+                                topologyService.getPaths(topologyService.currentTopology(),
+                                                         pkt.receivedFrom().deviceId(),
+                                                         dst.location().deviceId());
+
+                        if (!paths.isEmpty()) {
+                            // Otherwise, pick a path that does not lead back to where we
+                            // came from; if no such path, flood and bail.
+                            Path path = pickForwardPathIfPossible(paths, pkt.receivedFrom().port());
+                            if (path == null) {
+                                log.warn("Don't know where to go from here {} for {} -> {}",
+                                         pkt.receivedFrom(), ethPkt.getSourceMAC(), ethPkt.getDestinationMAC());
+                            } else {
+                                port = path.src().port();
+                            }
+                        }
+
+                        modsrc = nat(IpAddress.valueOf(iPv4.getDestinationAddress()), 2).toOctets();
+                        if (addrInMiddleBox(IpAddress.valueOf(iPv4.getSourceAddress()))) {
+                            moddst = nat2(IpAddress.valueOf(iPv4.getSourceAddress()), 2).toOctets();
+                        }
+                        installRule2(context, modsrc, moddst, port);
+
+                        iPv4.setDestinationAddress(nat(IpAddress.valueOf(iPv4.getDestinationAddress()), 2).toString());
+                        // If SRC is MiddleBox then change ip SRC.
+                        if (addrInMiddleBox(IpAddress.valueOf(iPv4.getSourceAddress()))) {
+                            iPv4.setSourceAddress(nat2(IpAddress.valueOf(iPv4.getSourceAddress()), 2).toString());
+                        }
+                        iPv4.resetChecksum();
+
+                        ethpkt.setPayload(iPv4);
+                        OutboundPacket outboundPacket = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
+                                                                                  context.treatmentBuilder().setOutput(port).build(),
+                                                                                  ByteBuffer.wrap(ethpkt.serialize()));
+                        packetService.emit(outboundPacket);
+                        context.block();
+                        return;
+                        // IPv4 send from host and DST in middlebox
+                        // SRC: 10.0.0.1 -> 10.1.0.1
+                    } else if (addrInMiddleBox(ethpkt.getDestinationMAC())) {
+                        // If DST is MiddleBox then change ip DST.
+                        PortNumber port = PortNumber.FLOOD;
+
+                        byte[] modsrc = MacAddress.ZERO.toBytes();
+                        byte[] moddst = MacAddress.ZERO.toBytes();
+
+                        Set<Path> paths =
+                                topologyService.getPaths(topologyService.currentTopology(),
+                                                         pkt.receivedFrom().deviceId(),
+                                                         dst.location().deviceId());
+
+                        if (!paths.isEmpty()) {
+                            // Otherwise, pick a path that does not lead back to where we
+                            // came from; if no such path, flood and bail.
+                            Path path = pickForwardPathIfPossible(paths, pkt.receivedFrom().port());
+                            if (path == null) {
+                                log.warn("Don't know where to go from here {} for {} -> {}",
+                                         pkt.receivedFrom(), ethPkt.getSourceMAC(), ethPkt.getDestinationMAC());
+                            } else {
+                                port = path.src().port();
+                            }
+                        }
+
+                        if (addrInMiddleBox(IpAddress.valueOf(iPv4.getSourceAddress()))) {
+                            moddst = nat2(IpAddress.valueOf(iPv4.getSourceAddress()), 2).toOctets();
+                        }
+                        modsrc = nat(IpAddress.valueOf(iPv4.getDestinationAddress()), 2).toOctets();
+                        installRule2(context, modsrc, moddst, port);
+
+                        if (IpAddress.valueOf(iPv4.getDestinationAddress()).equals(IpAddress.valueOf("10.0.0.254"))) {
+                            iPv4.setDestinationAddress(nat2(IpAddress.valueOf(iPv4.getSourceAddress()), 1).toString());
+                        }
+                        iPv4.setSourceAddress(nat(IpAddress.valueOf(iPv4.getSourceAddress()), 1).toString());
+                        iPv4.resetChecksum();
+
+                        ethpkt.setPayload(iPv4);
+
+                        OutboundPacket outboundPacket = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
+                                                                                  context.treatmentBuilder().setOutput(port).build(),
+                                                                                  ByteBuffer.wrap(ethpkt.serialize()));
+                        packetService.emit(outboundPacket);
+                        context.block();
+                        return;
+                    }
+                }
+
+//                HostId hostId = HostId.hostId(ethPkt.getDestinationMAC());
+//                LevelRule levelRule = getHostLevel(hostId);
+//                Ethernet inPkt = context.inPacket().parsed();
+//                if (!levelRule.level().getMac().equals(src.mac())) {
+//                    context.treatmentBuilder().setEthSrc(levelRule.level().getMac());
+//                    inPkt.setSourceMACAddress(levelRule.level().getMac());
+//                    log.info(ethPkt.getSourceMAC().toString() + " to " + ethPkt.getDestinationMAC().toString()
+//                                     + " SRC will change to " + levelRule.level().getMac());
+//                }
+            }
+
+
+//            if (pkt.parsed().getEtherType() == Ethernet.TYPE_ARP) {
+//                Ethernet ethpkt = pkt.parsed();
+//                ARP arp = (ARP)ethPkt.getPayload();
+//                 else if ()
+//            }
+
+            if (dst == null) {
+                flood(context);
+                return;
+            }
+
+            // Are we on an edge switch that our destination is on? If so,
+            // simply forward out to the destination and bail.
+            if (pkt.receivedFrom().deviceId().equals(dst.location().deviceId())) {
+                if (!context.inPacket().receivedFrom().port().equals(dst.location().port())) {
+//                    if (addrInMiddleBox(ethPkt.getDestinationMAC())) {
+//                        HostId hostid = HostId.hostId(ethPkt.getSourceMAC());
+//                        LevelRule levelRule = getHostLevel(hostid);
+////                        if (levelRule.level().getMac().equals(dst.mac())) {
+////                            installRule(context, context.inPacket().parsed(), dst.location().port());
+////                            return;
+////                        }
+//
+//                        Ethernet inPkt = context.inPacket().parsed();
+//                        PortNumber port = dst.location().port();
+//
+//                        // However it doesn't work...
+////                        context.treatmentBuilder().setEthDst(levelRule.level().getMac());
+//                        Ethernet outPkt;
+//                        try {
+//                            outPkt = Ethernet.deserializer().deserialize(context.outPacket().data().array(), 0, context.outPacket().data().remaining());
+//                            outPkt.setDestinationMACAddress(levelRule.level().getMac());
+//                            log.info(Boolean.toString(context.outPacket().data().array() == outPkt.serialize()));
+//                        } catch (DeserializationException e) {
+//                            log.info("Cannot deserialize packet!");
+//                            installRule(context, inPkt, port);
+//                            return;
+//                        }
+//                        OutboundPacket outboundPacket = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
+//                                                                          context.treatmentBuilder().setOutput(PortNumber.portNumber(levelRule.level().getPort())).build(),
+//                                                                            ByteBuffer.wrap(outPkt.serialize()));
+//                        packetService.emit(outboundPacket);
+//                        context.block();
+////                        inPkt.setDestinationMACAddress(levelRule.level().getMac());
+////                        port = PortNumber.portNumber(levelRule.level().getPort());
+//                        log.info(ethPkt.getSourceMAC().toString() + " to " + ethPkt.getDestinationMAC().toString()
+//                                         + " DST will change to " + levelRule.level().getMac()
+//                                         + ", port " + levelRule.level().getPort());
+//
+//                        log.info(context.outPacket().toString());
+////                        installRule(context, inPkt, port);
+//                        return;
+//                    }
+                    installRule(context, context.inPacket().parsed(), dst.location().port());
+                }
+                return;
+            }
+
+            // Otherwise, get a set of paths that lead from here to the
+            // destination edge switch.
+            Set<Path> paths =
+                    topologyService.getPaths(topologyService.currentTopology(),
+                                             pkt.receivedFrom().deviceId(),
+                                             dst.location().deviceId());
+            if (paths.isEmpty()) {
+                // If there are no paths, flood and bail.
+                flood(context);
+                return;
+            }
+
+            // Otherwise, pick a path that does not lead back to where we
+            // came from; if no such path, flood and bail.
+            Path path = pickForwardPathIfPossible(paths, pkt.receivedFrom().port());
+            if (path == null) {
+                log.warn("Don't know where to go from here {} for {} -> {}",
+                         pkt.receivedFrom(), ethPkt.getSourceMAC(), ethPkt.getDestinationMAC());
+                flood(context);
+                return;
+            }
+
+            // Otherwise forward and be done with it.
+            installRule(context, context.inPacket().parsed(), path.src().port());
+
+        }
     }
 
     // Sends a packet out the specified port.
