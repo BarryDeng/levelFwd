@@ -52,6 +52,7 @@ import org.onosproject.net.Path;
 import org.onosproject.net.Port;
 import org.onosproject.net.PortNumber;
 import org.onosproject.net.device.DeviceService;
+import org.onosproject.net.edge.EdgePortListener;
 import org.onosproject.net.edge.EdgePortService;
 import org.onosproject.net.flow.DefaultTrafficSelector;
 import org.onosproject.net.flow.DefaultTrafficTreatment;
@@ -71,6 +72,8 @@ import org.onosproject.net.host.HostEvent;
 import org.onosproject.net.host.HostListener;
 import org.onosproject.net.host.HostService;
 import org.onosproject.net.link.LinkEvent;
+import org.onosproject.net.neighbour.DefaultNeighbourMessageHandler;
+import org.onosproject.net.neighbour.NeighbourMessageHandler;
 import org.onosproject.net.neighbour.NeighbourResolutionService;
 import org.onosproject.net.packet.DefaultOutboundPacket;
 import org.onosproject.net.packet.InboundPacket;
@@ -153,7 +156,8 @@ public class LevelManager implements LevelService {
 
     private Connection conn = null;
 
-    // private EdgePortListener edgeListener = new
+    private EdgePortListener edgeListener = new InternalEdgeListener(this);
+    private NeighbourMessageHandler defaultHandler = new InternalNeighbourMessageHandler(this);
 
     private ExecutorService blackHoleExecutor;
 
@@ -161,8 +165,8 @@ public class LevelManager implements LevelService {
         TrafficSelector.Builder selector = DefaultTrafficSelector.builder();
         selector.matchEthType(Ethernet.TYPE_IPV4);
         packetService.requestPackets(selector.build(), PacketPriority.REACTIVE, appId);
-        selector.matchEthType(Ethernet.TYPE_ARP);
-        packetService.requestPackets(selector.build(), PacketPriority.REACTIVE, appId);
+//        selector.matchEthType(Ethernet.TYPE_ARP);
+//        packetService.requestPackets(selector.build(), PacketPriority.REACTIVE, appId);
     }
 
     @Activate
@@ -180,10 +184,12 @@ public class LevelManager implements LevelService {
                                                                    log));
 
         hostService.addListener(hostListener);
+        hostService.getHosts().forEach(this::addHostDefault);
 
         idGenerator = coreService.getIdGenerator("host-ids");
 
-//        edgeService.addListener();
+        edgeService.addListener(edgeListener);
+        edgeService.getEdgePoints().forEach(this::addDefault);
 
         log.info("Started");
     }
@@ -197,10 +203,37 @@ public class LevelManager implements LevelService {
         log.info("Stopped");
     }
 
+    void addDefault(ConnectPoint port) {
+        neighbourResolutionService.registerNeighbourHandler(port, defaultHandler, appId);
+    }
+
+    void removeDefault(ConnectPoint port) {
+        neighbourResolutionService.unregisterNeighbourHandler(port, defaultHandler, appId);
+    }
+
     // Indicates whether this is a control packet, e.g. LLDP, BDDP
     private boolean isControlPacket(Ethernet eth) {
         short type = eth.getEtherType();
         return type == Ethernet.TYPE_LLDP || type == Ethernet.TYPE_BSN;
+    }
+
+    private void addHostDefault(Host host) {
+        HostInfo.Builder builder = HostInfo.builder();
+        builder.hostId(host.id());
+        builder.vlanId(host.vlan());
+        builder.deviceId(host.location().deviceId());
+//                builder.Ip(event.subject().location().ipElementId().ipAddress().toIpPrefix());
+
+        Set<IpAddress> addrs = host.ipAddresses();
+        if (addrs.isEmpty()) {
+            builder.Ip(IpAddress.valueOf("66.66.66.66"));
+        } else {
+            builder.Ip(host.ipAddresses().iterator().next());
+        }
+        builder.srcMAC(host.mac());
+        HostInfo new_host = builder.build();
+        addHostInfo(new_host);
+        log.info(String.format("New Host %s: %s", host.id(), new_host.toString()));
     }
 
     private class InternalHostListener implements HostListener {
@@ -210,25 +243,37 @@ public class LevelManager implements LevelService {
             log.info("HOST CHANGED!!");
 
             if (event.type() == HostEvent.Type.HOST_ADDED) {
-                HostInfo.Builder builder = HostInfo.builder();
-                builder.hostId(event.subject().id());
-                builder.vlanId(event.subject().vlan());
-                builder.deviceId(event.subject().location().deviceId());
-//                builder.Ip(event.subject().location().ipElementId().ipAddress().toIpPrefix());
-
-                Set<IpAddress> addrs = event.subject().ipAddresses();
-                if (addrs.isEmpty()) {
-                    builder.Ip(IpAddress.valueOf("66.66.66.66"));
-                } else {
-
-                    builder.Ip(event.subject().ipAddresses().iterator().next());
-                }
-                builder.srcMAC(event.subject().mac());
-                HostInfo new_host = builder.build();
-                addHostInfo(new_host);
-                log.info(String.format("New Host %s: %s", event.subject().id(), new_host.toString()));
+                addHostDefault(event.subject());
             }
         }
+    }
+
+    public MacAddress getGatewayMacByHostId(HostId hostId) {
+        LevelRule level = getHostLevel(hostId);
+        return level.level().getMac();
+//        IpAddress ipAddress = hostService.getHost(hostId).ipAddresses().iterator().next();
+//        nat()
+//        return MacAddress.valueOf("00:00:00:00:01:00");
+    }
+
+    public boolean isMacInGateways(MacAddress mac) {
+        for (Level level: getLevelDef()) {
+            if (level.getMac().equals(mac)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isIpInSpecial(IpAddress ip) {
+        byte[] ipArr = ip.toOctets();
+        return ipArr[1] != 0;
+    }
+
+    public IpAddress recoverIpToNormal(IpAddress ip) {
+        byte[] ipArr = ip.toOctets();
+        ipArr[1] = 0;
+        return IpAddress.valueOf(IpAddress.Version.INET, ipArr);
     }
 
     private class InternalTopologyListener implements TopologyListener {
@@ -708,10 +753,11 @@ public class LevelManager implements LevelService {
             }
         }
 
-        TrafficTreatment.Builder treatmentbuilder = DefaultTrafficTreatment.builder()
-                .setIpSrc(IpAddress.valueOf(IpAddress.Version.INET, src));
-
-        if (dst != MacAddress.ZERO.toBytes()) {
+        TrafficTreatment.Builder treatmentbuilder = DefaultTrafficTreatment.builder();
+        if (!Ip4Address.valueOf(src).equals(Ip4Address.ZERO)) {
+            treatmentbuilder.setIpSrc(IpAddress.valueOf(IpAddress.Version.INET, src));
+        }
+        if (!Ip4Address.valueOf(dst).equals(Ip4Address.ZERO)) {
             treatmentbuilder.setIpDst(IpAddress.valueOf(IpAddress.Version.INET, dst));
         }
         TrafficTreatment treatment = treatmentbuilder.setOutput(portNumber)
@@ -790,11 +836,11 @@ public class LevelManager implements LevelService {
 
             IpAddress[] dst = new IpAddress[]{
                     IpAddress.valueOf("10.1.0.1"),
-                    IpAddress.valueOf("10.2.0.2"),
-                    IpAddress.valueOf("10.3.0.3"),
+                    IpAddress.valueOf("10.1.0.2"),
+                    IpAddress.valueOf("10.1.0.3"),
                     IpAddress.valueOf("10.1.0.4"),
-                    IpAddress.valueOf("10.2.0.5"),
-                    IpAddress.valueOf("10.3.0.6"),
+                    IpAddress.valueOf("10.1.0.5"),
+                    IpAddress.valueOf("10.1.0.6"),
             };
 
             if (direction == 1) {
@@ -826,11 +872,11 @@ public class LevelManager implements LevelService {
 
             IpAddress[] dsts = new IpAddress[]{
                     IpAddress.valueOf("10.1.0.254"),
-                    IpAddress.valueOf("10.2.0.254"),
-                    IpAddress.valueOf("10.3.0.254"),
                     IpAddress.valueOf("10.1.0.254"),
-                    IpAddress.valueOf("10.2.0.254"),
-                    IpAddress.valueOf("10.3.0.254"),
+                    IpAddress.valueOf("10.1.0.254"),
+                    IpAddress.valueOf("10.1.0.254"),
+                    IpAddress.valueOf("10.1.0.254"),
+                    IpAddress.valueOf("10.1.0.254"),
             };
 
             if (direction == 1) {
@@ -900,82 +946,87 @@ public class LevelManager implements LevelService {
 //                    }
 //                }
 //            }
+            if (dst == null) {
+                flood(context);
+                return;
+            }
 
-
-            if (pkt.receivedFrom().deviceId().equals(src.location().deviceId())) {
+            if (pkt.receivedFrom().deviceId().equals(DeviceId.deviceId("of:0000000000010201"))) {
                 // ARP Packet
-                if (pkt.parsed().getEtherType() == Ethernet.TYPE_ARP) {
-                    Ethernet ethpkt = pkt.parsed();
-                    ARP arp = (ARP) ethPkt.getPayload();
-                    // ARP send from MiddleBox
-                    // SRC: 10.1.0.254 -> 10.0.0.254
-                    // DST: 10.1.0.1 -> 10.0.0.1
-                    if (addrInMiddleBox(IpAddress.valueOf(IpAddress.Version.INET, arp.getSenderProtocolAddress()))) {
-                        arp.setTargetProtocolAddress(nat(IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()), 2).toOctets());
-                        arp.setSenderProtocolAddress(nat2(IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()), 2).toOctets());
-                        PortNumber port = PortNumber.FLOOD;
-
-                        if (dst != null) {
-                            Set<Path> paths =
-                                    topologyService.getPaths(topologyService.currentTopology(),
-                                                             pkt.receivedFrom().deviceId(),
-                                                             dst.location().deviceId());
-                            if (!paths.isEmpty()) {
-                                Path path = pickForwardPathIfPossible(paths, pkt.receivedFrom().port());
-                                if (path == null) {
-                                    log.warn("Don't know where to go from here {} for {} -> {}",
-                                             pkt.receivedFrom(), ethPkt.getSourceMAC(), ethPkt.getDestinationMAC());
-                                } else {
-                                    port = path.src().port();
-                                }
-                            }
-                        }
-                        ethpkt.setPayload(arp);
-                        ethpkt.resetChecksum();
-
-                        context.block();
-                        if (port == PortNumber.FLOOD) {
-                            for (Port p : deviceService.getPorts(context.inPacket().receivedFrom().deviceId())) {
-                                if (p.number().equals(context.inPacket().receivedFrom().port())) {
-                                    continue;
-                                }
-                                OutboundPacket outboundPacket = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
-                                                                                          DefaultTrafficTreatment.builder().setOutput(p.number()).build(),
-                                                                                          ByteBuffer.wrap(ethpkt.serialize()));
-
-                                packetService.emit(outboundPacket);
-                            }
-                        } else {
-                            OutboundPacket outboundPacket = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
-                                                                                      DefaultTrafficTreatment.builder().setOutput(port).build(),
-                                                                                      ByteBuffer.wrap(ethpkt.serialize()));
-                            packetService.emit(outboundPacket);
-                        }
-                        return;
-                        // ARP send from host
-                        // SRC: 10.0.0.1 -> 10.1.0.1
-                        // DST: 10.0.0.254 -> 10.1.0.254
-                    } else if (IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()).equals(IpAddress.valueOf("10.0.0.254"))) {
-                        arp.setTargetProtocolAddress(nat2(IpAddress.valueOf(IpAddress.Version.INET, arp.getSenderProtocolAddress()), 1).toOctets());
-                        arp.setSenderProtocolAddress(nat(IpAddress.valueOf(IpAddress.Version.INET, arp.getSenderProtocolAddress()), 1).toOctets());
-                        ethpkt.setPayload(arp);
-                        ethpkt.resetChecksum();
-
-                        context.block();
-                        for (Port port : deviceService.getPorts(context.inPacket().receivedFrom().deviceId())) {
-                            if (port.number().equals(context.inPacket().receivedFrom().port())) {
-                                continue;
-                            }
-                            OutboundPacket outboundPacket = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
-                                                                                      DefaultTrafficTreatment.builder().setOutput(port.number()).build(),
-                                                                                      ByteBuffer.wrap(ethpkt.serialize()));
-
-                            packetService.emit(outboundPacket);
-                        }
-                        return;
-                    }
-                    // IPv4
-                } else if (pkt.parsed().getEtherType() == Ethernet.TYPE_IPV4) {
+//                if (pkt.parsed().getEtherType() == Ethernet.TYPE_ARP) {
+//
+//                    Ethernet ethpkt = pkt.parsed();
+//                    ARP arp = (ARP) ethPkt.getPayload();
+//                    // ARP send from MiddleBox
+//                    // SRC: 10.1.0.254 -> 10.0.0.254
+//                    // DST: 10.1.0.1 -> 10.0.0.1
+//                    if (addrInMiddleBox(IpAddress.valueOf(IpAddress.Version.INET, arp.getSenderProtocolAddress()))) {
+//                        arp.setTargetProtocolAddress(nat(IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()), 2).toOctets());
+//                        arp.setSenderProtocolAddress(nat2(IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()), 2).toOctets());
+//                        PortNumber port = PortNumber.FLOOD;
+//
+//                        if (dst != null) {
+//                            Set<Path> paths =
+//                                    topologyService.getPaths(topologyService.currentTopology(),
+//                                                             pkt.receivedFrom().deviceId(),
+//                                                             dst.location().deviceId());
+//                            if (!paths.isEmpty()) {
+//                                Path path = pickForwardPathIfPossible(paths, pkt.receivedFrom().port());
+//                                if (path == null) {
+//                                    log.warn("Don't know where to go from here {} for {} -> {}",
+//                                             pkt.receivedFrom(), ethPkt.getSourceMAC(), ethPkt.getDestinationMAC());
+//                                } else {
+//                                    port = path.src().port();
+//                                }
+//                            }
+//                        }
+//                        ethpkt.setPayload(arp);
+//                        ethpkt.resetChecksum();
+//
+//                        context.block();
+//                        if (port == PortNumber.FLOOD) {
+//                            for (Port p : deviceService.getPorts(context.inPacket().receivedFrom().deviceId())) {
+//                                if (p.number().equals(context.inPacket().receivedFrom().port())) {
+//                                    continue;
+//                                }
+//                                OutboundPacket outboundPacket = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
+//                                                                                          DefaultTrafficTreatment.builder().setOutput(p.number()).build(),
+//                                                                                          ByteBuffer.wrap(ethpkt.serialize()));
+//
+//                                packetService.emit(outboundPacket);
+//                            }
+//                        } else {
+//                            OutboundPacket outboundPacket = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
+//                                                                                      DefaultTrafficTreatment.builder().setOutput(port).build(),
+//                                                                                      ByteBuffer.wrap(ethpkt.serialize()));
+//                            packetService.emit(outboundPacket);
+//                        }
+//                        return;
+//                        // ARP send from host
+//                        // SRC: 10.0.0.1 -> 10.1.0.1
+//                        // DST: 10.0.0.254 -> 10.1.0.254
+//                    } else if (IpAddress.valueOf(IpAddress.Version.INET, arp.getTargetProtocolAddress()).equals(IpAddress.valueOf("10.0.0.254"))) {
+//                        arp.setTargetProtocolAddress(nat2(IpAddress.valueOf(IpAddress.Version.INET, arp.getSenderProtocolAddress()), 1).toOctets());
+//                        arp.setSenderProtocolAddress(nat(IpAddress.valueOf(IpAddress.Version.INET, arp.getSenderProtocolAddress()), 1).toOctets());
+//                        ethpkt.setPayload(arp);
+//                        ethpkt.resetChecksum();
+//
+//                        context.block();
+//                        for (Port port : deviceService.getPorts(context.inPacket().receivedFrom().deviceId())) {
+//                            if (port.number().equals(context.inPacket().receivedFrom().port())) {
+//                                continue;
+//                            }
+//                            OutboundPacket outboundPacket = new DefaultOutboundPacket(context.inPacket().receivedFrom().deviceId(),
+//                                                                                      DefaultTrafficTreatment.builder().setOutput(port.number()).build(),
+//                                                                                      ByteBuffer.wrap(ethpkt.serialize()));
+//
+//                            packetService.emit(outboundPacket);
+//                        }
+//                        return;
+//                    }
+//                    // IPv4
+//                } else
+                    if (pkt.parsed().getEtherType() == Ethernet.TYPE_IPV4) {
                     Ethernet ethpkt = pkt.parsed();
                     IPv4 iPv4 = (IPv4) ethpkt.getPayload();
                     // IPv4 send from middlebox
@@ -988,29 +1039,32 @@ public class LevelManager implements LevelService {
 
                         PortNumber port = PortNumber.FLOOD;
 
-                        byte[] modsrc = MacAddress.ZERO.toBytes();
-                        byte[] moddst = MacAddress.ZERO.toBytes();
-
-                        Set<Path> paths =
-                                topologyService.getPaths(topologyService.currentTopology(),
-                                                         pkt.receivedFrom().deviceId(),
-                                                         dst.location().deviceId());
-
-                        if (!paths.isEmpty()) {
-                            // Otherwise, pick a path that does not lead back to where we
-                            // came from; if no such path, flood and bail.
-                            Path path = pickForwardPathIfPossible(paths, pkt.receivedFrom().port());
-                            if (path == null) {
-                                log.warn("Don't know where to go from here {} for {} -> {}",
-                                         pkt.receivedFrom(), ethPkt.getSourceMAC(), ethPkt.getDestinationMAC());
-                            } else {
-                                port = path.src().port();
+                        if (pkt.receivedFrom().deviceId().equals(dst.location().deviceId())) {
+                            if (!context.inPacket().receivedFrom().port().equals(dst.location().port())) {
+                                port = dst.location().port();
+                            }
+                        } else {
+                            Set<Path> paths =
+                                    topologyService.getPaths(topologyService.currentTopology(),
+                                                             pkt.receivedFrom().deviceId(),
+                                                             dst.location().deviceId());
+                            if (paths.isEmpty()) {
+                                Path path = pickForwardPathIfPossible(paths, pkt.receivedFrom().port());
+                                if (path == null) {
+                                    log.warn("Don't know where to go from here {} for {} -> {}",
+                                             pkt.receivedFrom(), ethPkt.getSourceMAC(), ethPkt.getDestinationMAC());
+                                } else {
+                                    port = path.src().port();
+                                }
                             }
                         }
 
-                        modsrc = nat(IpAddress.valueOf(iPv4.getDestinationAddress()), 2).toOctets();
+                        byte[] modsrc = Ip4Address.ZERO.toOctets();
+                        byte[] moddst = Ip4Address.ZERO.toOctets();
+
+                        moddst = nat(IpAddress.valueOf(iPv4.getDestinationAddress()), 2).toOctets();
                         if (addrInMiddleBox(IpAddress.valueOf(iPv4.getSourceAddress()))) {
-                            moddst = nat2(IpAddress.valueOf(iPv4.getSourceAddress()), 2).toOctets();
+                            modsrc = nat2(IpAddress.valueOf(iPv4.getSourceAddress()), 2).toOctets();
                         }
                         installRule2(context, modsrc, moddst, port);
 
@@ -1032,32 +1086,15 @@ public class LevelManager implements LevelService {
                         // SRC: 10.0.0.1 -> 10.1.0.1
                     } else if (addrInMiddleBox(ethpkt.getDestinationMAC())) {
                         // If DST is MiddleBox then change ip DST.
-                        PortNumber port = PortNumber.FLOOD;
+                        PortNumber port = dst.location().port();
 
-                        byte[] modsrc = MacAddress.ZERO.toBytes();
-                        byte[] moddst = MacAddress.ZERO.toBytes();
+                        byte[] modsrc = Ip4Address.ZERO.toOctets();
+                        byte[] moddst = Ip4Address.ZERO.toOctets();
 
-                        Set<Path> paths =
-                                topologyService.getPaths(topologyService.currentTopology(),
-                                                         pkt.receivedFrom().deviceId(),
-                                                         dst.location().deviceId());
-
-                        if (!paths.isEmpty()) {
-                            // Otherwise, pick a path that does not lead back to where we
-                            // came from; if no such path, flood and bail.
-                            Path path = pickForwardPathIfPossible(paths, pkt.receivedFrom().port());
-                            if (path == null) {
-                                log.warn("Don't know where to go from here {} for {} -> {}",
-                                         pkt.receivedFrom(), ethPkt.getSourceMAC(), ethPkt.getDestinationMAC());
-                            } else {
-                                port = path.src().port();
-                            }
+                        modsrc = nat(IpAddress.valueOf(iPv4.getSourceAddress()), 1).toOctets();
+                        if (IpAddress.valueOf(iPv4.getDestinationAddress()).equals(IpAddress.valueOf("10.0.0.254"))) {
+                            moddst = nat2(IpAddress.valueOf(iPv4.getSourceAddress()), 1).toOctets();
                         }
-
-                        if (addrInMiddleBox(IpAddress.valueOf(iPv4.getSourceAddress()))) {
-                            moddst = nat2(IpAddress.valueOf(iPv4.getSourceAddress()), 2).toOctets();
-                        }
-                        modsrc = nat(IpAddress.valueOf(iPv4.getDestinationAddress()), 2).toOctets();
                         installRule2(context, modsrc, moddst, port);
 
                         if (IpAddress.valueOf(iPv4.getDestinationAddress()).equals(IpAddress.valueOf("10.0.0.254"))) {
@@ -1094,11 +1131,6 @@ public class LevelManager implements LevelService {
 //                ARP arp = (ARP)ethPkt.getPayload();
 //                 else if ()
 //            }
-
-            if (dst == null) {
-                flood(context);
-                return;
-            }
 
             // Are we on an edge switch that our destination is on? If so,
             // simply forward out to the destination and bail.

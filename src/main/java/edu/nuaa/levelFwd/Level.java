@@ -6,9 +6,9 @@ import org.onlab.packet.MacAddress;
 public enum Level {
     WHITELIST(10000,(short)1, "11:11:11:11:11:11"),
     RELIABLE(10001, (short)2, "11:11:11:11:11:11"),
-    NORMAL(10002, (short) 5, "00:00:00:02:00:01"),
-    THREAT(10003, (short) 6, "00:00:00:02:01:01"),
-    BLACKLIST(10004, (short) 7, "00:00:00:02:02:01");
+    NORMAL(10002, (short) 5, "00:00:00:00:01:00"),
+    THREAT(10003, (short) 6, "00:00:00:01:02:00"),
+    BLACKLIST(10004, (short) 7, "00:00:00:02:03:00");
 
     private int code;
     private short port;

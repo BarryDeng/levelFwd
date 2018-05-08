@@ -53,7 +53,7 @@ public class LevelWebResource extends AbstractWebResource {
 
             node.put("hostId", info.id().toString());
             node.put("vlanId", info.vlanId().toString());
-            node.put("deviceId", info.toString());
+            node.put("deviceId", info.deviceId().toString());
             node.put("mac", info.srcMAC().toString());
             node.put("port", info.rule().level().getPort());
             node.put("levels", info.rule().service().toArray().toString());
