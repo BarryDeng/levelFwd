@@ -4,6 +4,7 @@ package edu.nuaa.levelFwd;
 import com.google.common.base.MoreObjects;
 import org.onlab.packet.MacAddress;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -13,14 +14,14 @@ import java.util.TreeSet;
 public class LevelRule {
 
     private Level level;
-    private Set<String> service = new TreeSet<>();
+    private Set<String> service = new HashSet<>();
 
     public LevelRule() {
         this.level = Level.NORMAL;
         this.service.add("web");
     }
 
-    public LevelRule(Level level, Set<String> service) {
+    private LevelRule(Level level, Set<String> service) {
         this.level = level;
         this.service = service;
     }

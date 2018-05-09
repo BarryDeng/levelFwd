@@ -81,7 +81,8 @@ public class LevelWebResource extends AbstractWebResource {
         ObjectNode node = mapper.createObjectNode();
         node.put("hostId", info.id().toString());
         node.put("vlanId", info.vlanId().toString());
-        node.put("deviceId", info.toString());
+        node.put("deviceId", info.deviceId().toString());
+        node.put("ip", info.Ip().toString());
         node.put("mac", info.srcMAC().toString());
         node.setAll(ruleToJson(info.rule()));
         return Response.ok(node.toString(), MediaType.APPLICATION_JSON_TYPE).build();
@@ -104,8 +105,6 @@ public class LevelWebResource extends AbstractWebResource {
 
     /**
      * Set MiddleBox MAC Address
-     *
-     *
      */
     @POST
     @Path("middlebox")
@@ -126,8 +125,8 @@ public class LevelWebResource extends AbstractWebResource {
 
             for (Level level : levels) {
                 if (level.getCode() == innerNode.path("code").asInt()) {
-                    level.setIp(innerNode.path("middlebox ip").asText());
-                    level.setMac(innerNode.path("middlebox mac").asText());
+                    level.setIp(innerNode.path("MiddleBox ip").asText());
+                    level.setMac(innerNode.path("MiddleBox mac").asText());
                 }
             }
         }
@@ -150,8 +149,8 @@ public class LevelWebResource extends AbstractWebResource {
             ObjectNode node = mapper.createObjectNode();
             node.put("name", level.name());
             node.put("code", level.getCode());
-            node.put("middlebox ip", level.getIp().toString());
-            node.put("middlebox mac", level.getMac().toString());
+            node.put("MiddleBox ip", level.getIp().toString());
+            node.put("MiddleBox mac", level.getMac().toString());
             arrayNode.add(node);
         }
         root.set("middleBox", arrayNode);

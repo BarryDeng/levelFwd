@@ -29,6 +29,7 @@ import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.Service;
 import org.onlab.packet.Ethernet;
 import org.onlab.packet.ICMP;
+import org.onlab.packet.IP;
 import org.onlab.packet.IPv4;
 import org.onlab.packet.Ip4Address;
 import org.onlab.packet.Ip4Prefix;
@@ -39,7 +40,6 @@ import org.onlab.packet.TpPort;
 import org.onlab.packet.UDP;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
-import org.onosproject.core.IdGenerator;
 import org.onosproject.event.Event;
 import org.onosproject.net.ConnectPoint;
 import org.onosproject.net.DeviceId;
@@ -91,6 +91,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -142,7 +143,6 @@ public class LevelManager implements LevelService {
     private ApplicationId appId;
     private HostListener hostListener = new InternalHostListener();
     private PacketProcessor processor = new InternalPacketListener();
-    private IdGenerator idGenerator;
 
     private Connection conn = null;
 
@@ -162,8 +162,7 @@ public class LevelManager implements LevelService {
     @Activate
     protected void activate(ComponentContext context) {
         appId = coreService.registerApplication("edu.nuaa.levelFwd");
-        idGenerator = coreService.getIdGenerator("host-ids");
-        //initMysqlConnection();
+        initMysqlConnection();
 
         packetService.addProcessor(processor, PacketProcessor.director(1));
         requestIntercepts();
@@ -221,18 +220,19 @@ public class LevelManager implements LevelService {
      * HostService host add function
      */
     private void addHostDefault(Host host) {
-        HostInfo.Builder builder = HostInfo.builder();
-        builder.hostId(host.id());
-        builder.vlanId(host.vlan());
-        builder.deviceId(host.location().deviceId());
+        HostInfo.Builder builder = HostInfo.builder()
+                .setHostId(host.id())
+                .setVlanId(host.vlan())
+                .setDeviceId(host.location().deviceId())
+                .setSrcMAC(host.mac());
 
         Set<IpAddress> addrs = host.ipAddresses();
         if (addrs.isEmpty()) {
-            builder.Ip(IpAddress.valueOf("66.66.66.66"));
+            builder.setIp(IpAddress.valueOf("66.66.66.66"));
         } else {
-            builder.Ip(host.ipAddresses().iterator().next());
+            builder.setIp(host.ipAddresses().iterator().next());
         }
-        builder.srcMAC(host.mac());
+
         HostInfo new_host = builder.build();
         addHostInfo(new_host);
         log.info(String.format("New Host %s: %s", host.id(), new_host.toString()));
@@ -272,10 +272,9 @@ public class LevelManager implements LevelService {
     }
 
     /**
-     * Store each pkt in MySQL
-     * @param pkt
+     * Store first pkt to MySQL
      */
-    private void storeToMysqlDatabase(Ethernet pkt) {
+    private void storeFirstPktToMysqlDatabase(Ethernet pkt) {
         String sql;
         try {
             Statement stmt = conn.createStatement();
@@ -339,38 +338,63 @@ public class LevelManager implements LevelService {
         }
     }
 
+    /**
+     *  Store attack to MySQL
+     */
+    private void storeAttackToMysqlDatabase(String srcIp, String dstIp, String protocol, String attack, String time){
+        String sql;
+        try {
+            Statement stmt = conn.createStatement();
+            sql = String.format("insert into attack (srcIp, dstIp, potrol, attack, time, " +
+                                        "('%s', '%s', %s, '%s', '%s')",
+                                srcIp, dstIp, protocol, attack, time);
+            if (stmt.execute(sql)) {
+                log.info("Insert OK!");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private class InternalPacketListener implements PacketProcessor {
 
         // Ipv4
         private boolean addrInMiddleBox(IpAddress addr) {
-            IpAddress[] middleboxes = new IpAddress[]{
-                    IpAddress.valueOf("10.1.0.254"),
-                    IpAddress.valueOf("10.2.0.254"),
-                    IpAddress.valueOf("10.3.0.254"),
-                    IpAddress.valueOf("10.4.0.254"),
-                    IpAddress.valueOf("10.5.0.254")
-            };
-            for (IpAddress item : middleboxes) {
-                if (addr.equals(item)) {
+            for (Level level: Level.values()){
+                if (addr.equals(level.getIp()))
                     return true;
-                }
             }
+//            IpAddress[] middleboxes = new IpAddress[]{
+//                    IpAddress.valueOf("10.1.0.254"),
+//                    IpAddress.valueOf("10.2.0.254"),
+//                    IpAddress.valueOf("10.3.0.254"),
+//                    IpAddress.valueOf("10.4.0.254"),
+//                    IpAddress.valueOf("10.5.0.254")
+//            };
+//            for (IpAddress item : middleboxes) {
+//                if (addr.equals(item)) {
+//                    return true;
+//                }
+//            }
             return false;
         }
 
         // MAC
         private boolean addrInMiddleBox(MacAddress addr) {
-            // TODO: HACK!
-            MacAddress[] middleboxes = new MacAddress[]{
-                    MacAddress.valueOf("00:00:00:00:01:00"),
-                    MacAddress.valueOf("00:00:00:01:02:00"),
-                    MacAddress.valueOf("00:00:00:02:03:00"),
-            };
-            for (MacAddress item : middleboxes) {
-                if (item.equals(addr)) {
+            for (Level level: Level.values()){
+                if (addr.equals(level.getMac()))
                     return true;
-                }
             }
+//            MacAddress[] middleboxes = new MacAddress[]{
+//                    MacAddress.valueOf("00:00:00:00:01:00"),
+//                    MacAddress.valueOf("00:00:00:01:02:00"),
+//                    MacAddress.valueOf("00:00:00:02:03:00"),
+//            };
+//            for (MacAddress item : middleboxes) {
+//                if (item.equals(addr)) {
+//                    return true;
+//                }
+//            }
             return false;
         }
 
@@ -529,8 +553,7 @@ public class LevelManager implements LevelService {
 
                 flowObjectiveService.forward(context.inPacket().receivedFrom().deviceId(),
                                              forwardingObjective);
-            }
-            else {
+            } else {
                 TrafficTreatment treatment = DefaultTrafficTreatment.builder()
                         .setOutput(portNumber)
                         .build();
@@ -555,6 +578,57 @@ public class LevelManager implements LevelService {
             }
         }
 
+        // sensitive address Detection
+        private boolean sensitiveIpDetection(Ethernet ethPkt) {
+            IPv4 ipv4 = null;
+            UDP udp = null;
+            ICMP icmp = null;
+            boolean Auth = false;
+            boolean attack = false;
+            if (ethPkt.getPayload() instanceof IPv4) {
+                ipv4 = (IPv4) ethPkt.getPayload();
+            }
+            if (ipv4 != null) {
+                String srcIp = IpAddress.valueOf(ipv4.getSourceAddress()).toString();
+                IpAddress dstIp = IpAddress.valueOf((ipv4.getDestinationAddress()));
+                LevelRule srcLevel = getHostLevel(HostId.hostId(ethPkt.getSourceMAC()));
+                String time = "2018";
+
+                // Does host can scan sensitive Ip or not.
+                Iterator<String> it = srcLevel.service().iterator();
+                while(it.hasNext()){
+                    if (it.next().equals("scan"))
+                        Auth = true;
+                }
+                // If can't, dstIp is sensitive Ip or not.
+                // dstIp is sensitive Ip, then store and block pkt.
+                // sensitive Ip are 10.*.0.254.
+                if(!Auth) {
+                    for (Level level : Level.values()) {
+                        if (level.getIp().equals(dstIp)) {
+                            attack = true;
+                        }
+                    }
+                    if (attack) {
+                        if (ipv4.getPayload() instanceof UDP) {
+                            udp = (UDP) ipv4.getPayload();
+                        } else if (ipv4.getPayload() instanceof ICMP) {
+                            icmp = (ICMP) ipv4.getPayload();
+                        }
+                        if (udp != null) {
+                            storeAttackToMysqlDatabase(srcIp, dstIp.toString(), "udp", "sensitive address scan", time);
+                        }else if (icmp != null){
+                            storeAttackToMysqlDatabase(srcIp, dstIp.toString(), "icmp", "ping sensitive address", time);
+                        }
+                        else
+                            storeAttackToMysqlDatabase(srcIp, dstIp.toString(), "tcp", "sensitive address scan", time);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         @Override
         public void process(PacketContext context) {
 
@@ -569,7 +643,12 @@ public class LevelManager implements LevelService {
                 return;
             }
 
-//            storeToMysqlDatabase(ethPkt);
+            // Do not forwarding the illegal pkt
+            if (sensitiveIpDetection(ethPkt)){
+                return ;
+            }
+
+            storeFirstPktToMysqlDatabase(ethPkt);
 
             // Bail if this is deemed to be a control packet.
             if (isControlPacket(ethPkt)) {
@@ -595,6 +674,10 @@ public class LevelManager implements LevelService {
                 if (pkt.parsed().getEtherType() == Ethernet.TYPE_IPV4) {
                     Ethernet ethpkt = pkt.parsed();
                     IPv4 iPv4 = (IPv4) ethpkt.getPayload();
+
+                    byte[] modsrc = Ip4Address.ZERO.toOctets();
+                    byte[] moddst = Ip4Address.ZERO.toOctets();
+
                     // IPv4 send from middlebox
                     // DST 10.1.0.* -> 10.0.0.*
                     // SRC 10.*.0.254 -> 10.0.0.254
@@ -625,9 +708,6 @@ public class LevelManager implements LevelService {
                                 }
                             }
                         }
-
-                        byte[] modsrc = Ip4Address.ZERO.toOctets();
-                        byte[] moddst = Ip4Address.ZERO.toOctets();
 
                         // Get dst host level
                         // Nat middle box IpAddress by host level
@@ -660,15 +740,12 @@ public class LevelManager implements LevelService {
                         packetService.emit(outboundPacket);
                         context.block();
                         return;
-                        // IPv4 send from host && DST in middlebox
+                        // IPv4 send from host && DST in MiddleBox
                         // SRC: 10.0.0.* -> 10.1.0.*
                         // DST: 10.0.0.254 -> 10.*.0.254
                     } else if (addrInMiddleBox(ethpkt.getDestinationMAC())) {
                         // If DST is MiddleBox then change ip DST.
                         PortNumber port = dst.location().port();
-
-                        byte[] modsrc = Ip4Address.ZERO.toOctets();
-                        byte[] moddst = Ip4Address.ZERO.toOctets();
 
                         // Get src host level
                         // Nat middle box IpAddress by host level
@@ -739,6 +816,8 @@ public class LevelManager implements LevelService {
             // Otherwise forward and be done with it.
             installRule(context, context.inPacket().parsed(),null,null, path.src().port());
         }
+
+
     }
 
     // Sends a packet out the specified port.
