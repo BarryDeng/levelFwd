@@ -376,8 +376,8 @@ public class LevelManager implements LevelService {
 
         /**
          * Host IpAddress NAT
-         * @direction == 1 10.0.0.* -> 10.1.0.*
-         * @direction == 2 10.1.0.* -> 10.0.0.*
+         * direction == 1 10.0.0.* -> 10.1.0.*
+         * direction == 2 10.1.0.* -> 10.0.0.*
          */
         private IpAddress nat(IpAddress addr, int direction) {
             IpAddress[] src = new IpAddress[]{
@@ -417,8 +417,8 @@ public class LevelManager implements LevelService {
 
         /**
          * GetWay IpAddress NAT follow by hostLevel
-         * @direction == 1 10.0.0.254 -> 10.*.0.254
-         * @direction == 2 10.*.0.254 -> 10.0.0.254
+         * direction == 1 10.0.0.254 -> 10.*.0.254
+         * direction == 2 10.*.0.254 -> 10.0.0.254
          */
         private IpAddress nat2(IpAddress src, int direction) {
             IpAddress[] srcs = new IpAddress[]{
@@ -633,6 +633,10 @@ public class LevelManager implements LevelService {
                         // Nat middle box IpAddress by host level
                         HostId hostid = HostId.hostId(ethPkt.getDestinationMAC());
                         LevelRule level = getHostLevel(hostid);
+                        if (level == null){
+                            log.error("Can't find host's level");
+                            return;
+                        }
 
                         moddst = nat(IpAddress.valueOf(iPv4.getDestinationAddress()), 2).toOctets();
                         if (addrInMiddleBox(IpAddress.valueOf(iPv4.getSourceAddress()))) {
@@ -668,9 +672,12 @@ public class LevelManager implements LevelService {
 
                         // Get src host level
                         // Nat middle box IpAddress by host level
-                        HostId hostid = HostId.hostId(ethPkt.getDestinationMAC());
+                        HostId hostid = HostId.hostId(ethPkt.getSourceMAC());
                         LevelRule level = getHostLevel(hostid);
-
+                        if (level == null){
+                            log.error("Can't find host's level");
+                            return;
+                        }
                         modsrc = nat(IpAddress.valueOf(iPv4.getSourceAddress()), 1).toOctets();
                         if (IpAddress.valueOf(iPv4.getDestinationAddress()).equals(IpAddress.valueOf("10.0.0.254"))) {
                             //moddst = nat2(IpAddress.valueOf(iPv4.getSourceAddress()), 1).toOctets();
