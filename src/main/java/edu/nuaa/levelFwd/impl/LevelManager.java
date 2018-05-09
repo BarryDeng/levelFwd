@@ -616,11 +616,14 @@ public class LevelManager implements LevelService {
                             icmp = (ICMP) ipv4.getPayload();
                         }
                         if (udp != null) {
+                            log.info("SrcIP:{}, DstIP:{}, Protocol:{}, Attack:{}, Time:{}",srcIp, dstIp.toString(), "udp", "sensitive address scan", time );
                             storeAttackToMysqlDatabase(srcIp, dstIp.toString(), "udp", "sensitive address scan", time);
                         }else if (icmp != null){
+                            log.info("SrcIP:{}, DstIP:{}, Protocol:{}, Attack:{}, Time:{}",srcIp, dstIp.toString(), "icmp", "ping sensitive address", time );
                             storeAttackToMysqlDatabase(srcIp, dstIp.toString(), "icmp", "ping sensitive address", time);
                         }
                         else
+                            log.info("SrcIP:{}, DstIP:{}, Protocol:{}, Attack:{}, Time:{}",srcIp, dstIp.toString(), "tcp", "sensitive address scan", time );
                             storeAttackToMysqlDatabase(srcIp, dstIp.toString(), "tcp", "sensitive address scan", time);
                         return true;
                     }
