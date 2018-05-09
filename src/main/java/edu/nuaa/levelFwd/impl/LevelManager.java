@@ -163,7 +163,7 @@ public class LevelManager implements LevelService {
     protected void activate(ComponentContext context) {
         appId = coreService.registerApplication("edu.nuaa.levelFwd");
         idGenerator = coreService.getIdGenerator("host-ids");
-        initMysqlConnection();
+        //initMysqlConnection();
 
         packetService.addProcessor(processor, PacketProcessor.director(1));
         requestIntercepts();
@@ -569,7 +569,7 @@ public class LevelManager implements LevelService {
                 return;
             }
 
-            storeToMysqlDatabase(ethPkt);
+//            storeToMysqlDatabase(ethPkt);
 
             // Bail if this is deemed to be a control packet.
             if (isControlPacket(ethPkt)) {

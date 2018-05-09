@@ -55,8 +55,8 @@ public class LevelWebResource extends AbstractWebResource {
             node.put("vlanId", info.vlanId().toString());
             node.put("deviceId", info.deviceId().toString());
             node.put("mac", info.srcMAC().toString());
-            node.put("port", info.rule().level().getPort());
-            node.put("levels", info.rule().service().toArray().toString());
+            node.put("ip", info.rule().level().getIp().toString());
+            node.put("levels", info.rule().toString());
 
 
             arrayNode.add(node);
@@ -126,8 +126,8 @@ public class LevelWebResource extends AbstractWebResource {
 
             for (Level level : levels) {
                 if (level.getCode() == innerNode.path("code").asInt()) {
-                    level.setPort((short)innerNode.path("port").asInt());
-                    level.setMac(innerNode.path("mac").asText());
+                    level.setIp(innerNode.path("middlebox ip").asText());
+                    level.setMac(innerNode.path("middlebox mac").asText());
                 }
             }
         }
@@ -150,8 +150,8 @@ public class LevelWebResource extends AbstractWebResource {
             ObjectNode node = mapper.createObjectNode();
             node.put("name", level.name());
             node.put("code", level.getCode());
-            node.put("port", level.getPort());
-            node.put("mac", level.getMac().toString());
+            node.put("middlebox ip", level.getIp().toString());
+            node.put("middlebox mac", level.getMac().toString());
             arrayNode.add(node);
         }
         root.set("middleBox", arrayNode);
@@ -167,7 +167,7 @@ public class LevelWebResource extends AbstractWebResource {
     public Response clearMiddleBoxes() {
         Level[] levels = get(LevelService.class).getLevelDef();
         for (Level level : levels) {
-            level.setPort((short)1);
+            level.setIp("0.0.0.0");
         }
         return Response.noContent().build();
     }

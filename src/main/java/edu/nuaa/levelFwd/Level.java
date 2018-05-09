@@ -1,30 +1,41 @@
 package edu.nuaa.levelFwd;
 
 
+import org.onlab.packet.IpAddress;
 import org.onlab.packet.MacAddress;
 
 public enum Level {
-    WHITELIST(10000,(short)1, "11:11:11:11:11:11"),
-    RELIABLE(10001, (short)2, "11:11:11:11:11:11"),
-    NORMAL(10002, (short) 5, "00:00:00:00:01:00"),
-    THREAT(10003, (short) 6, "00:00:00:01:02:00"),
-    BLACKLIST(10004, (short) 7, "00:00:00:02:03:00");
+    WHITELIST(10000,"10.4.0.254", "11:11:11:11:11:11"),
+    RELIABLE(10001, "10.5.0.254", "11:11:11:11:11:11"),
+    NORMAL(10002, "10.1.0.254", "00:00:00:00:01:00"),
+    THREAT(10003, "10.2.0.254", "00:00:00:01:02:00"),
+    BLACKLIST(10004, "10.3.0.254", "00:00:00:02:03:00");
 
     private int code;
-    private short port;
+    private String ip;
     private String mac;
-    private Level(int code, short port, String mac) {
+    private Level(int code, String ip, String mac) {
         this.code = code;
-        this.port = port;
+        this.ip = ip;
         this.mac = mac;
+    }
+
+    public IpAddress natByLevel(int direction){
+        if (direction == 1) {
+            return this.getIp();
+        } else if (direction == 2){
+            return IpAddress.valueOf("10.0.0.254");
+        }
+        else
+            return null;
     }
 
     public int getCode() {
         return this.code;
     }
 
-    public short getPort() {
-        return this.port;
+    public IpAddress getIp() {
+        return IpAddress.valueOf(this.ip);
     }
 
     public MacAddress getMac(){
@@ -35,8 +46,8 @@ public enum Level {
         this.code = code;
     }
 
-    public void setPort(short port) {
-        this.port = port;
+    public void setIp(String ip) {
+        this.ip = ip;
     }
 
     public void setMac(String mac) {

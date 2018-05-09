@@ -162,5 +162,4 @@ public class HostInfo {
                 .add("rule", rule)
                 .toString();
     }
-
 }

@@ -1,6 +1,7 @@
 package edu.nuaa.levelFwd;
 
 
+import com.google.common.base.MoreObjects;
 import org.onlab.packet.MacAddress;
 
 import java.util.Set;
@@ -55,5 +56,14 @@ public class LevelRule {
 
     public void delService(String service){
         this.service.remove(service);
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .omitNullValues()
+                .add("level", level.toString())
+                .add("service", service)
+                .toString();
     }
 }
