@@ -533,14 +533,14 @@ public class LevelManager implements LevelService {
                 }
             }
             if (src != null && dst != null){
-                TrafficTreatment.Builder treatmentbuilder = DefaultTrafficTreatment.builder();
+                TrafficTreatment.Builder treatmentBuilder = DefaultTrafficTreatment.builder();
                 if (!Ip4Address.valueOf(src).equals(Ip4Address.ZERO)) {
-                    treatmentbuilder.setIpSrc(IpAddress.valueOf(IpAddress.Version.INET, src));
+                    treatmentBuilder.setIpSrc(IpAddress.valueOf(IpAddress.Version.INET, src));
                 }
                 if (!Ip4Address.valueOf(dst).equals(Ip4Address.ZERO)) {
-                    treatmentbuilder.setIpDst(IpAddress.valueOf(IpAddress.Version.INET, dst));
+                    treatmentBuilder.setIpDst(IpAddress.valueOf(IpAddress.Version.INET, dst));
                 }
-                TrafficTreatment treatment = treatmentbuilder.setOutput(portNumber)
+                TrafficTreatment treatment = treatmentBuilder.setOutput(portNumber)
                         .build();
                 ForwardingObjective forwardingObjective = DefaultForwardingObjective.builder()
                         .withSelector(selectorBuilder.build())
@@ -595,9 +595,8 @@ public class LevelManager implements LevelService {
                 String time = "2018";
 
                 // Does host can scan sensitive Ip or not.
-                Iterator<String> it = srcLevel.service().iterator();
-                while(it.hasNext()){
-                    if (it.next().equals("scan"))
+                for(String  value : srcLevel.service()){
+                    if (value.equals("scan"))
                         Auth = true;
                 }
                 // If can't, dstIp is sensitive Ip or not.
