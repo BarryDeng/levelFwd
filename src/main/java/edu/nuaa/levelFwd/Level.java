@@ -44,9 +44,15 @@ public enum Level {
     }
 
     public static Level getByValue(int value) {
-        for (Level level : values()) {
-            if (level.getCode() == value) {
-                return level;
+        if (value > 10004) {
+            return Level.BLACKLIST;
+        } else if (value < 10000) {
+            return Level.WHITELIST;
+        } else {
+            for (Level level : values()) {
+                if (level.getCode() == value) {
+                    return level;
+                }
             }
         }
 

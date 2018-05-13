@@ -58,7 +58,6 @@ public class LevelWebResource extends AbstractWebResource {
             node.put("port", info.rule().level().getPort());
             node.put("levels", info.rule().service().toArray().toString());
 
-
             arrayNode.add(node);
         }
 
@@ -74,7 +73,7 @@ public class LevelWebResource extends AbstractWebResource {
      * @return HostInfo in JSON.
      */
     @GET
-    @Path("host/{id}")
+    @Path("host/get/{id}")
     public Response getHostInfoById(@PathParam("id") String id) throws URISyntaxException {
         HostInfo info = get(LevelService.class).getHostInfo(HostId.hostId(id + "/None"));
         ObjectMapper mapper = new ObjectMapper();
@@ -85,6 +84,22 @@ public class LevelWebResource extends AbstractWebResource {
         node.put("mac", info.srcMAC().toString());
         node.setAll(ruleToJson(info.rule()));
         return Response.ok(node.toString(), MediaType.APPLICATION_JSON_TYPE).build();
+    }
+
+    @GET
+    @Path("host/down/{id}")
+    public Response downLevelById(@PathParam("id") String id) throws URISyntaxException {
+        HostInfo info = get(LevelService.class).getHostInfo(HostId.hostId(id + "/None"));
+        info.rule().downLevel();
+        return Response.noContent().build();
+    }
+
+    @GET
+    @Path("host/up/{id}")
+    public Response upLevelById(@PathParam("id") String id) throws URISyntaxException {
+        HostInfo info = get(LevelService.class).getHostInfo(HostId.hostId(id + "/None"));
+        info.rule().upLevel();
+        return Response.noContent().build();
     }
 
     /**
