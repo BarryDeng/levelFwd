@@ -94,33 +94,28 @@ public class HostInfo {
             // Hide constructor
         }
 
-        public Builder hostId(HostId id) {
+        public Builder setHostId(HostId id) {
             this.id = id;
             return this;
         }
 
-        public Builder vlanId(VlanId vlanId){
+        public Builder setVlanId(VlanId vlanId){
             this.vlanId = vlanId;
             return this;
         }
 
-        public Builder deviceId(DeviceId deviceId){
+        public Builder setDeviceId(DeviceId deviceId){
             this.deviceId = deviceId;
             return this;
         }
 
-        public Builder Ip(IpAddress Ip) {
+        public Builder setIp(IpAddress Ip) {
             this.Ip = Ip;
             return this;
         }
 
-        public Builder srcMAC(MacAddress srcMAC){
+        public Builder setSrcMAC(MacAddress srcMAC){
             this.srcMAC = srcMAC;
-            return this;
-        }
-
-        public Builder rule(LevelRule rule){
-            this.rule = rule;
             return this;
         }
 
@@ -159,8 +154,7 @@ public class HostInfo {
                 .add("deviceId", deviceId)
                 .add("Ip", Ip)
                 .add("srcMAC", srcMAC)
-                .add("rule", rule)
+                .add("rule", rule.toString())
                 .toString();
     }
-
 }

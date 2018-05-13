@@ -24,7 +24,7 @@ public class InternalNeighbourMessageHandler implements NeighbourMessageHandler 
         switch (context.type()) {
             case REPLY:
 
-                // if middlebox then change dst and src.
+                // if MiddleBox then change dst and src.
 //                if (levelManager.isMacInGateways(context.srcMac())) {
 //                    Host h = hostService.getHost(hostId())
 //                }
@@ -37,7 +37,7 @@ public class InternalNeighbourMessageHandler implements NeighbourMessageHandler 
                 }
                 break;
             case REQUEST:
-                // if dst is middlebox then reply specific mac
+                // if dst is MiddleBox then reply specific mac
                 if (context.target().equals(IpAddress.valueOf("10.0.0.254"))) {
                     HostId host = HostId.hostId(context.srcMac(), context.vlan());
                     context.reply(levelManager.getGatewayMacByHostId(host));
@@ -45,7 +45,7 @@ public class InternalNeighbourMessageHandler implements NeighbourMessageHandler 
 
                 IpAddress target = context.target();
 
-                // if dst is host then reply specfic mac
+                // if dst is host then reply specific mac
                 if (levelManager.isIpInSpecial(context.target())) {
                     target = levelManager.recoverIpToNormal(context.target());
                 }

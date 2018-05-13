@@ -43,7 +43,6 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
     private final int defaultFlowMaxPriority = 30000;
 
     private ConsistentMap<HostId, HostInfo> hostSet; // Host信息记录
-    private ConsistentMap<DeviceId, Integer> deviceToPriority; // Device优先级
     private ConsistentMap<HostId, Set<String>> hostToService; // 主机可以访问的服务类型
     private ConsistentMap<HostId, LevelRule> hostToLevel; // 主机对应的安全级别
 
@@ -68,13 +67,6 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
         hostSet = storageService.<HostId, HostInfo>consistentMapBuilder()
                 .withSerializer(Serializer.using(serializer.build()))
                 .withName("host-info-set")
-                .withApplicationId(appId)
-                .withPurgeOnUninstall()
-                .build();
-
-        deviceToPriority = storageService.<DeviceId, Integer>consistentMapBuilder()
-                .withSerializer(Serializer.using(serializer.build()))
-                .withName("device-to-priority")
                 .withApplicationId(appId)
                 .withPurgeOnUninstall()
                 .build();
@@ -144,7 +136,6 @@ public class DistributeHostInfoStore extends AbstractStore implements HostStore 
     @Override
     public void clearHosts() {
         hostSet.clear();
-        deviceToPriority.clear();
         hostToService.clear();
         hostToLevel.clear();
     }
